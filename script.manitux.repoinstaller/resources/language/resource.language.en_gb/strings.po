@@ -78,3 +78,27 @@ msgstr "Could not read id from addon.xml"
 msgctxt "#30015"
 msgid "Unsafe zip path: {0}"
 msgstr "Unsafe zip path: {0}"
+
+msgctxt "#30016"
+msgid "Add repository"
+msgstr "Add repository"
+
+msgctxt "#30017"
+msgid "Add plugin"
+msgstr "Add plugin"
+
+msgctxt "#30020"
+msgid "Plugin zip address found:"
+msgstr "Plugin zip address found:"
+
+msgctxt "#30021"
+msgid "Plugin installed"
+msgstr "Plugin installed"
+
+msgctxt "#30022"
+msgid "Plugin could not be installed"
+msgstr "Plugin could not be installed"
+
+msgctxt "#30023"
+msgid "Zip is not a plugin add-on: {0}"
+msgstr "Zip is not a plugin add-on: {0}"

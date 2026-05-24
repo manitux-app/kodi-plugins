@@ -28,32 +28,39 @@ def text(string_id):
 
 def main():
     dialog = xbmcgui.Dialog()
-    value = dialog.input(text(30000), defaultt="mntxrepo")
+    mode = dialog.select(TITLE, [text(30016), text(30017)])
+    if mode == -1:
+        return
+
+    is_repository = mode == 0
+    value = dialog.input(text(30000), defaultt="mntxrepo" if is_repository else "")
     if not value:
         return
 
     short_url = normalize_short_url(value)
     try:
-        repo_url = resolve_url(short_url)
+        zip_url = resolve_url(short_url)
     except Exception as exc:
         notify(text(30006), str(exc), xbmcgui.NOTIFICATION_ERROR)
         return
 
-    if not repo_url.lower().endswith(".zip"):
-        if not dialog.yesno(TITLE, text(30001), repo_url, text(30002)):
+    found_message = text(30003) if is_repository else text(30020)
+    if not zip_url.lower().endswith(".zip"):
+        if not dialog.yesno(TITLE, text(30001), zip_url, text(30002)):
             return
-    elif not dialog.yesno(TITLE, text(30003), repo_url, text(30004)):
+    elif not dialog.yesno(TITLE, found_message, zip_url, text(30004)):
         return
 
     try:
-        zip_path = download(repo_url)
-        addon_id = install_repository_zip(zip_path)
+        zip_path = download(zip_url)
+        addon_id = install_addon_zip(zip_path, is_repository)
         enable_addon(addon_id)
         xbmc.executebuiltin("UpdateLocalAddons")
-        xbmc.executebuiltin("UpdateAddonRepos")
-        notify(text(30008), addon_id, xbmcgui.NOTIFICATION_INFO)
+        if is_repository:
+            xbmc.executebuiltin("UpdateAddonRepos")
+        notify(text(30008) if is_repository else text(30021), addon_id, xbmcgui.NOTIFICATION_INFO)
     except Exception as exc:
-        notify(text(30009), str(exc), xbmcgui.NOTIFICATION_ERROR)
+        notify(text(30009) if is_repository else text(30022), str(exc), xbmcgui.NOTIFICATION_ERROR)
 
 
 def normalize_short_url(value):
@@ -81,7 +88,7 @@ def resolve_url(url):
 
 def download(url):
     temp_dir = translate_path("special://temp")
-    target = os.path.join(temp_dir, "manitux-repository.zip")
+    target = os.path.join(temp_dir, "manitux-addon.zip")
     progress = xbmcgui.DialogProgress()
     progress.create(TITLE, text(30005))
     try:
@@ -105,7 +112,7 @@ def download(url):
         progress.close()
 
 
-def install_repository_zip(zip_path):
+def install_addon_zip(zip_path, is_repository):
     addons_dir = translate_path("special://home/addons")
     with zipfile.ZipFile(zip_path, "r") as archive:
         names = [name for name in archive.namelist() if name and not name.endswith("/")]
@@ -116,8 +123,10 @@ def install_repository_zip(zip_path):
         if addon_xml not in names:
             raise RuntimeError(text(30011))
         addon_id = read_addon_id(archive.read(addon_xml).decode("utf-8", "replace"))
-        if not addon_id.startswith("repository."):
+        if is_repository and not addon_id.startswith("repository."):
             raise RuntimeError(text(30012).format(addon_id))
+        if not is_repository and not addon_id.startswith("plugin."):
+            raise RuntimeError(text(30023).format(addon_id))
         extract_safe(archive, addons_dir)
     return addon_id
 

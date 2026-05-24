@@ -78,3 +78,27 @@ msgstr "addon.xml icinde id okunamadi"
 msgctxt "#30015"
 msgid "Unsafe zip path: {0}"
 msgstr "Guvenli olmayan zip yolu: {0}"
+
+msgctxt "#30016"
+msgid "Add repository"
+msgstr "Repo ekle"
+
+msgctxt "#30017"
+msgid "Add plugin"
+msgstr "Plugin ekle"
+
+msgctxt "#30020"
+msgid "Plugin zip address found:"
+msgstr "Plugin zip adresi bulundu:"
+
+msgctxt "#30021"
+msgid "Plugin installed"
+msgstr "Plugin kuruldu"
+
+msgctxt "#30022"
+msgid "Plugin could not be installed"
+msgstr "Plugin kurulamadi"
+
+msgctxt "#30023"
+msgid "Zip is not a plugin add-on: {0}"
+msgstr "Zip bir plugin eklentisi degil: {0}"
