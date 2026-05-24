@@ -1,4 +1,9 @@
 # Manitux Kodi-plugins
+
+ [English](README_en.md)  
+ 
+ ⚠️ Bu proje şu anda geliştirme aşamasındadır
+
 Kodi için Türkçe içerik sağlayıcı eklentileri
 
 ## Kodi Repository

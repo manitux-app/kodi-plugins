@@ -1,5 +1,9 @@
 # Manitux Kodi-plugins
 
+[Türkçe](README.md) 
+
+⚠️ This project is currently under development
+
 Turkish content provider plugins for Kodi
 
 ## Kodi Repository
