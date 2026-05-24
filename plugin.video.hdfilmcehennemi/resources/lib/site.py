@@ -12,10 +12,12 @@ from . import parsers
 
 
 class HDFilmCehennemiSite(object):
+    CLIENT_IDENTIFIERS = ("chrome_144", "cloudscraper")
+
     def __init__(self, base_url, user_agent):
         self.base_url = base_url.rstrip("/")
         self.user_agent = user_agent
-        self.session = tlsclient.Session()
+        self.session = tlsclient.Session(client_identifier=self.CLIENT_IDENTIFIERS[0])
 
     def headers(self, referer=None, ajax=False):
         headers = {
@@ -31,11 +33,9 @@ class HDFilmCehennemiSite(object):
             headers["Content-Type"] = "application/json"
         return headers
 
-    def get(self, url, referer=None):
+    def get(self, url, referer=None, ajax=False):
         url = self.absolute(url)
-        res = self.session.get(url, headers=self.headers(referer), timeout=25)
-        res.raise_for_status()
-        return res.text
+        return self._get(url, headers=self.headers(referer, ajax=ajax)).text
 
     def categories(self):
         return parsers.categories(self.base_url)
@@ -45,7 +45,7 @@ class HDFilmCehennemiSite(object):
 
     def get_page_items(self, category_url, page_number=1, title=""):
         api_url = self.page_url(category_url, page_number)
-        page = self.get(api_url, referer=category_url)
+        page = self.get(api_url, referer=category_url, ajax=True)
         html_block = parsers.html_from_load_response(page)
         return parsers.parse_page_items(html_block, self.base_url, title)
 
@@ -56,12 +56,10 @@ class HDFilmCehennemiSite(object):
         return self.base_url + "/search/?q=" + quote_plus(query)
 
     def search(self, query):
-        res = self.session.get(
+        res = self._get(
             self.search_url(query),
             headers=self.headers(referer=self.base_url + "/", ajax=True),
-            timeout=25,
         )
-        res.raise_for_status()
         return parsers.parse_search_results(res.text, self.base_url)
 
     def parse_movies(self, page):
@@ -74,10 +72,26 @@ class HDFilmCehennemiSite(object):
         return parsers.parse_media_info(page, url, self.base_url)
 
     def fetch_source_iframe(self, video_id, referer):
-        res = self.session.get(
+        res = self._get(
             self.base_url + "/video/{0}/".format(video_id),
             headers=self.headers(referer=referer, ajax=True),
-            timeout=25,
         )
-        res.raise_for_status()
         return parsers.parse_iframe_from_video_response(res.text)
+
+    def _get(self, url, headers):
+        last_error = None
+        for identifier in self.CLIENT_IDENTIFIERS:
+            if self.session.client_identifier != identifier:
+                self.session = tlsclient.Session(client_identifier=identifier)
+            try:
+                res = self.session.get(url, headers=headers, timeout=25, tls_client_identifier=identifier)
+                if res.status_code in (403, 429) and identifier != self.CLIENT_IDENTIFIERS[-1]:
+                    last_error = tlsclient.HTTPError(res)
+                    continue
+                res.raise_for_status()
+                return res
+            except (tlsclient.HTTPError, tlsclient.RequestError) as exc:
+                last_error = exc
+                if identifier == self.CLIENT_IDENTIFIERS[-1]:
+                    raise
+        raise last_error

@@ -19,7 +19,7 @@ def categories(base_url):
         ("Türkçe Dublaj Filmler", base_url + "/load/page/[pageNumber]/languages/turkce-dublajli-film-izleyin-5/"),
         ("Türkçe Altyazılı Filmler", base_url + "/load/page/[pageNumber]/languages/turkce-altyazili-filmleri-izleme-sitesi-3/"),
         ("Aile Filmleri", base_url + "/tur/aile-filmleri-izleyin-7"),
-        ("Aksiyon Filmleri", base_url + "/tur/aksiyon-filmleri-izleyin-6"),
+        ("Aksiyon Filmleri", base_url + "/tur/aksiyon-filmleri-izleyin-7"),
         ("Animasyon Filmleri", base_url + "/tur/animasyon-filmlerini-izleyin-5"),
         ("Belgesel Filmleri", base_url + "/tur/belgesel-filmlerini-izle-2"),
         ("Bilim Kurgu Filmleri", base_url + "/tur/bilim-kurgu-filmlerini-izleyin-5"),
@@ -236,7 +236,9 @@ def _attr(tag, name):
 
 def _first(pattern, text, flags=0):
     match = re.search(pattern, text or "", flags | re.I)
-    return match.group(1) if match else ""
+    if not match:
+        return ""
+    return match.group(1) if match.lastindex else match.group(0)
 
 
 def _clean(text):
