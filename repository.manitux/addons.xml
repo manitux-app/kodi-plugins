@@ -48,6 +48,28 @@
         </assets>
     </extension>
 </addon>
+<addon id="script.manitux.repoinstaller"
+       name="Manitux Repo Installer"
+       version="1.0.0"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.python.script" library="addon.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="tr_TR">Kisa kod ile Kodi repository kurucu</summary>
+        <summary lang="en_GB">Kodi repository installer from short code</summary>
+        <description lang="tr_TR">TinyURL gibi kisa adres servislerinden repository zip adresini cozer ve repository eklentisini Kodi'ye kurar.</description>
+        <description lang="en_GB">Resolves repository zip URLs from short URL services such as TinyURL and installs the repository add-on into Kodi.</description>
+        <platform>all</platform>
+        <license>MIT</license>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
+</addon>
 <addon id="script.module.tlsclient" name="TLS Client" version="1.0.0" provider-name="serdar">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
