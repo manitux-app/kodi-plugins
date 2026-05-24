@@ -17,7 +17,7 @@
     <extension point="xbmc.addon.metadata">
         <summary lang="tr_TR">Manitux Kodi eklenti deposu</summary>
         <summary lang="en_GB">Manitux Kodi add-on repository</summary>
-        <description lang="tr_TR">Manitux Kodi eklentileri ve bagimliliklari icin depo.</description>
+        <description lang="tr_TR">Manitux Kodi eklentileri ve bağımlılıkları için depo.</description>
         <description lang="en_GB">Repository for Manitux Kodi add-ons and dependencies.</description>
         <platform>all</platform>
         <license>MIT</license>
@@ -39,7 +39,7 @@
     </extension>
     <extension point="xbmc.addon.metadata">
         <summary>HDFilmCehennemi Kodi video eklentisi</summary>
-        <description>hdfilmcehennemi uzerinden film ve dizi listeler, kaynaklari cozer ve Kodi'de oynatir.</description>
+        <description>Hdfilmcehennemi üzerinden film ve dizi listeler, kaynakları çözer ve Kodi'de oynatir.</description>
         <platform>all</platform>
         <license>GPL-3.0-or-later</license>
         <assets>
@@ -61,7 +61,7 @@
     </extension>
     <extension point="xbmc.addon.metadata">
         <summary>FilmMakinesi Kodi video eklentisi</summary>
-        <description>filmmakinesi.to uzerinden film ve dizi listeler, kaynaklari cozer ve Kodi'de oynatir.</description>
+        <description>Filmmakinesi üzerinden film ve dizi listeler, kaynakları çözer ve Kodi'de oynatir.</description>
         <platform>all</platform>
         <license>GPL-3.0-or-later</license>
         <assets>
