@@ -14,6 +14,7 @@ def categories(base_url):
     base_url = base_url.rstrip("/")
     return [
         ("Son Filmler", base_url + "/filmler-1/"),
+        ("Diziler", base_url + "/yabanci-dizi-izle-1/"),
         ("Aksiyon", base_url + "/tur/aksiyon-fm1/film/"),
         ("Aile", base_url + "/tur/aile-fm1/film/"),
         ("Animasyon", base_url + "/tur/animasyon-fm2/film/"),
@@ -140,20 +141,35 @@ def parse_video_sources(page, base_url):
 def parse_episodes(page, base_url):
     episodes = []
     seen = set()
-    for tag in re.findall(r'<a\b[^>]*href="[^"]+"[^>]*>.*?</a>', page, re.S):
+    for tag in re.findall(r'<a\b[^>]*href=["\'][^"\']+["\'][^>]*>.*?</a>', page or "", re.S | re.I):
         href = _attr(tag, "href")
-        season = _first(r"(\d+)-sezon", href)
-        episode = _first(r"(\d+)-bolum", href)
+        text = _clean(tag)
+        season = (
+            _first(r"(?:^|/)sezon-(\d+)(?:/|$)", href)
+            or _first(r"(\d+)-sezon", href)
+            or _first(r"(\d+)\.?\s*sezon", text, re.I)
+        )
+        episode = (
+            _first(r"(?:^|/)b[oö]lum-(\d+)(?:/|$)", href)
+            or _first(r"(\d+)-b[oö]lum", href)
+            or _first(r"(\d+)\.?\s*b[oö]l[uü]m", text, re.I)
+        )
         if not season or not episode:
             continue
         key = (season, episode)
         if key in seen:
             continue
         seen.add(key)
-        title = _clean(tag)
-        if "Bölüm" in title:
-            title = title.split("Bölüm")[-1].strip()
-        episodes.append({"title": title or "{0}. Sezon {1}. Bölüm".format(season, episode), "url": fix_url(href, base_url), "season": season, "episode": episode})
+        title = _clean(_first(r'<div[^>]*class="[^"]*\bep-title\b[^"]*"[^>]*>(.*?)</div>', tag, re.S)) or text
+        detail = _clean(_first(r'<div[^>]*class="[^"]*\bep-details\b[^"]*"[^>]*>(.*?)</div>', tag, re.S))
+        if detail and detail not in title:
+            title = "{0} - {1}".format(title, detail)
+        episodes.append({
+            "title": title or "{0}. Sezon {1}. Bolum".format(season, episode),
+            "url": fix_url(href, base_url),
+            "season": season,
+            "episode": episode,
+        })
     return sorted(episodes, key=lambda item: (int(item["season"]), int(item["episode"])))
 
 

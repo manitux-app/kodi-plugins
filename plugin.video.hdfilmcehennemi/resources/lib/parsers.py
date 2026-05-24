@@ -147,15 +147,25 @@ def parse_media_info(page, url, base_url):
 
 def parse_episodes(page, base_url):
     episodes = []
-    for block in re.findall(r'<a\b[^>]*href="[^"]+"[^>]*>.*?</a>', _first(r'<div[^>]*class="[^"]*\bseasons-tab-content\b[^"]*"[^>]*>(.*?)</div>', page, re.S), re.S):
+    seen = set()
+    for block in re.findall(r'<a\b[^>]*class="[^"]*\bmini-poster\b[^"]*"[^>]*>.*?</a>', page or "", re.S | re.I):
         title = _clean(_first(r"<h4[^>]*>(.*?)</h4>", block, re.S))
         href = _attr(block, "href")
-        if not title or not href:
+        if not href or not re.search(r"/sezon-\d+/bolum-\d+/", href, re.I):
             continue
-        season = _first(r"(\d+)\.?\s*Sezon", title, re.I) or "1"
-        episode = _first(r"(\d+)\.?\s*Bölüm", title, re.I) or "1"
-        episodes.append({"title": title, "url": fix_url(href, base_url), "season": season, "episode": episode})
-    return episodes
+        season = _first(r"(\d+)\.?\s*Sezon", title, re.I) or _first(r"/sezon-(\d+)/", href, re.I) or "1"
+        episode = _first(r"(\d+)\.?\s*B[oö]l[uü]m", title, re.I) or _first(r"/bolum-(\d+)/", href, re.I) or "1"
+        key = (season, episode)
+        if key in seen:
+            continue
+        seen.add(key)
+        episodes.append({
+            "title": title or "{0}. Sezon {1}. Bolum".format(season, episode),
+            "url": fix_url(href, base_url),
+            "season": season,
+            "episode": episode,
+        })
+    return sorted(episodes, key=lambda item: (int(item["season"]), int(item["episode"])))
 
 
 def parse_related(page, base_url):
