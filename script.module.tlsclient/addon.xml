@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="script.module.tlsclient" name="TLS Client" version="1.0.0" provider-name="serdar">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.python.module" library="lib"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Cross-platform TLS HTTP client module for Kodi add-ons.</summary>
+        <summary lang="tr_TR">Kodi eklentileri icin platform bagimsiz TLS HTTP istemci modulu.</summary>
+        <description lang="en_GB">A pure Python HTTP/TLS helper that works on Kodi platforms including Android without bundled native binaries.</description>
+        <description lang="tr_TR">Android dahil Kodi platformlarinda native binary gerektirmeden calisan saf Python HTTP/TLS yardimcisi.</description>
+        <platform>all</platform>
+        <license>MIT</license>
+    </extension>
+</addon>

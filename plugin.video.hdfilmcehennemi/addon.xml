@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.hdfilmcehennemi"
+       name="HDFilmCehennemi"
+       version="1.0.0"
+       provider-name="seyirTURK">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.tlsclient"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>HDFilmCehennemi Kodi video eklentisi</summary>
+        <description>hdfilmcehennemi uzerinden film ve dizi listeler, kaynaklari cozer ve Kodi'de oynatir.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
+</addon>

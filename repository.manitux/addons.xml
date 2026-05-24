@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addons>
+<addon id="repository.manitux"
+       name="Manitux Repository"
+       version="1.0.0"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.addon" version="12.0.0"/>
+    </requires>
+    <extension point="xbmc.addon.repository" name="Manitux Repository">
+        <dir>
+            <info compressed="false">https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/repository.manitux/addons.xml</info>
+            <checksum>https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/repository.manitux/addons.xml.md5</checksum>
+            <datadir zip="true">https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/repository.manitux/</datadir>
+        </dir>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="tr_TR">Manitux Kodi eklenti deposu</summary>
+        <summary lang="en_GB">Manitux Kodi add-on repository</summary>
+        <description lang="tr_TR">Manitux Kodi eklentileri ve bagimliliklari icin depo.</description>
+        <description lang="en_GB">Repository for Manitux Kodi add-ons and dependencies.</description>
+        <platform>all</platform>
+        <license>MIT</license>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
+</addon>
+<addon id="plugin.video.hdfilmcehennemi"
+       name="HDFilmCehennemi"
+       version="1.0.0"
+       provider-name="seyirTURK">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.tlsclient"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>HDFilmCehennemi Kodi video eklentisi</summary>
+        <description>hdfilmcehennemi uzerinden film ve dizi listeler, kaynaklari cozer ve Kodi'de oynatir.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
+</addon>
+<addon id="script.module.tlsclient" name="TLS Client" version="1.0.0" provider-name="serdar">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.python.module" library="lib"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Cross-platform TLS HTTP client module for Kodi add-ons.</summary>
+        <summary lang="tr_TR">Kodi eklentileri icin platform bagimsiz TLS HTTP istemci modulu.</summary>
+        <description lang="en_GB">A pure Python HTTP/TLS helper that works on Kodi platforms including Android without bundled native binaries.</description>
+        <description lang="tr_TR">Android dahil Kodi platformlarinda native binary gerektirmeden calisan saf Python HTTP/TLS yardimcisi.</description>
+        <platform>all</platform>
+        <license>MIT</license>
+    </extension>
+</addon>
+</addons>

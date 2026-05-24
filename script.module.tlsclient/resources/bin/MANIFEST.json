@@ -1,0 +1,31 @@
+{
+  "source": "https://github.com/bogdanfinn/tls-client",
+  "version": "1.14.0",
+  "assets": {
+    "darwin-amd64/libtls-client.dylib": {
+      "sha256": "e56480ba6ebc5d2aef9638e41ff9d53838af3a5c86bfffa9ee98dc87580843c7"
+    },
+    "darwin-arm64/libtls-client.dylib": {
+      "sha256": "4aa4e196ff5c38f51eeb02f6a8a20e0b36391994255ed5431394b2282cdfae7a"
+    },
+    "linux-amd64/libtls-client.so": {
+      "sha256": "f04313db5347974142272412ca346fc487ecbef6ad8a7587d4a6da77f4f55c37"
+    },
+    "linux-arm64/libtls-client.so": {
+      "sha256": "cae2959514fc26f4b5e63b016e48e55314c8f740f28c598c580160df180de12d"
+    },
+    "linux-armv7/libtls-client.so": {
+      "sha256": "ff097a462054e4b123cba7a071ff435af5af3c9357ebb765f8e2752ccefb7e97"
+    },
+    "windows-x86/tls-client.dll": {
+      "sha256": "d9ce475d5e65300efff9265c4a988cd58f99bc896b8bc22794ac44055ca9737e"
+    },
+    "windows-amd64/tls-client.dll": {
+      "sha256": "cb995d034352454a78839b7a8558b6e9cf5a3d4800dcea0f760183ac66ca36c6"
+    }
+  },
+  "notes": [
+    "Android libraries are expected at resources/bin/android/<abi>/libtlsclient.so.",
+    "Supported Android ABI folders: arm64-v8a, armeabi-v7a, x86_64."
+  ]
+}
