@@ -21,7 +21,7 @@ from resources.lib.site import HDFilmCehennemiSite
 ADDON_ID = "plugin.video.hdfilmcehennemi"
 ADDON = xbmcaddon.Addon(id=ADDON_ID)
 HANDLE = int(sys.argv[1])
-BASE_URL = ADDON.getSetting("base_url") or "https://www.hdfilmcehennemi.nl"
+BASE_URL = ADDON.getSetting("base_url") or "https://www.hdfilmcehennemi.com"
 UA = ADDON.getSetting("user_agent") or "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 site = HDFilmCehennemiSite(BASE_URL, UA)
@@ -51,48 +51,50 @@ def add_video(title, action, url, image="", plot="", extra=None):
 
 
 def main_menu():
-    add_directory("Yeni Eklenenler", "list", BASE_URL)
-    add_directory("Filmler", "list", BASE_URL + "/category/film-izle-2/")
-    add_directory("Diziler", "list", BASE_URL + "/yabancidiziizle-5/")
-    add_directory("Türkçe Dublaj", "list", BASE_URL + "/turkce-dublaj-film-izle/")
-    add_directory("Türkçe Altyazılı", "list", BASE_URL + "/turkce-altyazili-film-izle/")
-    add_directory("IMDb 7+", "list", BASE_URL + "/imdb-7-puan-uzeri-filmler-2/")
+    for title, url in site.categories():
+        add_directory(title, "list", url)
     add_directory("Ara", "search")
     xbmcplugin.setContent(HANDLE, "videos")
 
 
-def list_page(url):
-    page = site.get(url)
-    items = site.parse_movies(page)
+def list_page(url, page_number=1):
+    items = site.get_page_items(url, page_number)
     for item in items:
         add_directory(item["title"], "detail", item["url"], item["image"], item["plot"])
-    next_page = site.parse_next_page(page, url)
-    if next_page:
-        add_directory("Sonraki Sayfa", "list", next_page)
+    if items:
+        li = xbmcgui.ListItem(label="Sonraki Sayfa")
+        xbmcplugin.addDirectoryItem(
+            HANDLE,
+            build_url({"action": "list", "url": url, "page": str(int(page_number) + 1)}),
+            li,
+            True,
+        )
     xbmcplugin.setContent(HANDLE, "movies")
 
 
 def search():
     query = xbmcgui.Dialog().input("HDFilmCehennemi Ara")
     if query:
-        list_page(site.search_url(query))
+        for item in site.search(query):
+            add_directory(item["title"], "detail", item["url"], item["image"], item.get("plot", ""))
+        xbmcplugin.setContent(HANDLE, "movies")
 
 
 def detail(url):
     page = site.get(url)
     info = site.parse_detail(page, url)
+    for episode in info.get("episodes", []):
+        add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
     if info["sources"]:
         for source in info["sources"]:
             add_video(
                 source["label"],
-                "play_source",
-                url,
+                "play_iframe" if source.get("is_trailer") else "play_source",
+                source["url"] if source.get("is_trailer") else url,
                 info["image"],
                 info["plot"],
-                {"video_id": source["video_id"]},
+                {"video_id": source.get("video_id", "")},
             )
-    elif info["iframe"]:
-        add_video(info["title"] or "Oynat", "play_iframe", info["iframe"], info["image"], info["plot"], {"referer": url})
     else:
         xbmcgui.Dialog().notification("HDFilmCehennemi", "Video kaynagi bulunamadi", xbmcgui.NOTIFICATION_WARNING, 3000)
 
@@ -121,10 +123,11 @@ def run():
     params = dict(parse_qsl(sys.argv[2][1:]))
     action = params.get("action")
     url = params.get("url", "")
+    page_number = int(params.get("page", "1"))
     if not action:
         main_menu()
     elif action == "list":
-        list_page(url)
+        list_page(url, page_number)
     elif action == "search":
         search()
     elif action == "detail":
