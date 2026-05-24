@@ -18,3 +18,15 @@ Kurucu eklenti zip:
 https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/script.manitux.repoinstaller-1.0.2.zip
 
 Bu eklenti acildiginda `Repo ekle` veya `Plugin ekle` secilir. Dialog penceresine sadece `mntxrepo` gibi kisa kod ya da tam kisa URL yazilabilir. Eklenti kisa adresi uzun zip adresine cozer, indirir ve secilen ture gore yalnizca repository veya plugin eklentisini Kodi'ye kurar.
+
+
+## ⚖️ DMCA Yasal Uyarısı
+
+Bu bildirimle, bu uzantıların internetten video dosyaları çekerek standart bir web tarayıcısına benzer şekilde çalıştığını açıklığa kavuşturuyoruz.
+
+- **Bu depoda veya Kodi uygulamasında hiçbir içerik barındırılmamaktadır.**
+- Erişilen tüm içerikler üçüncü taraf web siteleri tarafından barındırılmaktadır.
+
+- Kullanıcılar kullanımlarından tamamen sorumludur ve yerel yasalarına uymak zorundadır.
+
+İçeriğin telif hakkı yasalarını ihlal ettiğini düşünüyorsanız, lütfen bu deponun veya Kodi uygulamasının geliştiricileriyle değil, **gerçek dosya barındırıcılarıyla** iletişime geçin.
