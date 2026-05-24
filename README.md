@@ -1,4 +1,4 @@
-# kodi-plugins
+# Manitux Kodi-plugins
 Kodi için Türkçe içerik sağlayıcı eklentileri
 
 ## Kodi Repository

@@ -1,4 +1,5 @@
-#kodi-plugins
+# Manitux Kodi-plugins
+
 Turkish content provider plugins for Kodi
 
 ## Kodi Repository
