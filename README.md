@@ -32,6 +32,6 @@ Bu bildirimle, bu uzantıların internetten video dosyaları çekerek standart b
 - **Bu depoda veya Kodi uygulamasında hiçbir içerik barındırılmamaktadır.**
 - Erişilen tüm içerikler üçüncü taraf web siteleri tarafından barındırılmaktadır.
 
-- Kullanıcılar kullanımlarından tamamen sorumludur ve yerel yasalarına uymak zorundadır.
+- Kullanıcılar kullanımlarından tamamen kendileri sorumludur ve yerel yasalarına uymak zorundadır.
 
 İçeriğin telif hakkı yasalarını ihlal ettiğini düşünüyorsanız, lütfen bu deponun veya Kodi uygulamasının geliştiricileriyle değil, **gerçek dosya barındırıcılarıyla** iletişime geçin.

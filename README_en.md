@@ -24,14 +24,14 @@ https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/script.manitux.r
 
 When this plugin is opened, select `Add Repository` or `Add Plugin`. Only short codes like `mntxrepo` or the full short URL can be entered into the dialog window. The extension extracts the short address to the long zip address, downloads it, and installs only the repository or plugin to Kodi according to the selected type.
 
-## ⚖️ DMCA Legal Notice
+## ⚖️ DMCA Disclaimer
 
-With this notice, we clarify that these extensions operate similarly to a standard web browser by pulling video files from the internet.
+We hereby issue this notice to clarify that these extensions function similarly to a standard web browser by fetching video files from the internet.
 
-- **No content is hosted in this repository or the Kodi application.**
+- **No content is hosted by this repository or the Kodi application.**
+- Any content accessed is hosted by third-party websites.
+- Users are solely responsible for their usage and must comply with their local laws.
 
-- All accessed content is hosted by third-party websites.
+If you believe content is violating copyright laws, please contact the **actual file hosts**, **not** the developers of this repository or the Kpdi app.
 
-- Users are solely responsible for their use and must comply with their local laws.
-
-If you believe that the content infringes copyright laws, please contact the **actual file hosts**, not the developers of this repository or the Kodi application.
+---
