@@ -22,9 +22,13 @@ DEFAULT_SERVICE = "https://tinyurl.com/"
 USER_AGENT = "Mozilla/5.0 (Kodi; Manitux Repo Installer)"
 
 
+def text(string_id):
+    return ADDON.getLocalizedString(string_id)
+
+
 def main():
     dialog = xbmcgui.Dialog()
-    value = dialog.input(TITLE, defaultt="mntxrepo")
+    value = dialog.input(text(30000), defaultt="mntxrepo")
     if not value:
         return
 
@@ -32,13 +36,13 @@ def main():
     try:
         repo_url = resolve_url(short_url)
     except Exception as exc:
-        notify("Kisa adres cozulmedi", str(exc), xbmcgui.NOTIFICATION_ERROR)
+        notify(text(30006), str(exc), xbmcgui.NOTIFICATION_ERROR)
         return
 
     if not repo_url.lower().endswith(".zip"):
-        if not dialog.yesno(TITLE, "Cozulen adres zip gibi gorunmuyor:", repo_url, "Devam edilsin mi?"):
+        if not dialog.yesno(TITLE, text(30001), repo_url, text(30002)):
             return
-    elif not dialog.yesno(TITLE, "Repository zip adresi bulundu:", repo_url, "Kurulsun mu?"):
+    elif not dialog.yesno(TITLE, text(30003), repo_url, text(30004)):
         return
 
     try:
@@ -47,9 +51,9 @@ def main():
         enable_addon(addon_id)
         xbmc.executebuiltin("UpdateLocalAddons")
         xbmc.executebuiltin("UpdateAddonRepos")
-        notify("Repository kuruldu", addon_id, xbmcgui.NOTIFICATION_INFO)
+        notify(text(30008), addon_id, xbmcgui.NOTIFICATION_INFO)
     except Exception as exc:
-        notify("Repository kurulamadi", str(exc), xbmcgui.NOTIFICATION_ERROR)
+        notify(text(30009), str(exc), xbmcgui.NOTIFICATION_ERROR)
 
 
 def normalize_short_url(value):
@@ -79,7 +83,7 @@ def download(url):
     temp_dir = translate_path("special://temp")
     target = os.path.join(temp_dir, "manitux-repository.zip")
     progress = xbmcgui.DialogProgress()
-    progress.create(TITLE, "Repository zip indiriliyor")
+    progress.create(TITLE, text(30005))
     try:
         request = Request(url, headers={"User-Agent": USER_AGENT})
         response = urlopen(request, timeout=30)
@@ -88,14 +92,14 @@ def download(url):
         with open(target, "wb") as handle:
             while True:
                 if progress.iscanceled():
-                    raise RuntimeError("Islem iptal edildi")
+                    raise RuntimeError(text(30007))
                 chunk = response.read(1024 * 64)
                 if not chunk:
                     break
                 handle.write(chunk)
                 received += len(chunk)
                 percent = int((received * 100) / total) if total else 0
-                progress.update(percent, "Repository zip indiriliyor")
+                progress.update(percent, text(30005))
         return target
     finally:
         progress.close()
@@ -107,13 +111,13 @@ def install_repository_zip(zip_path):
         names = [name for name in archive.namelist() if name and not name.endswith("/")]
         root = find_zip_root(names)
         if not root:
-            raise RuntimeError("Zip icinde eklenti klasoru bulunamadi")
+            raise RuntimeError(text(30010))
         addon_xml = root + "/addon.xml"
         if addon_xml not in names:
-            raise RuntimeError("Zip icinde addon.xml bulunamadi")
+            raise RuntimeError(text(30011))
         addon_id = read_addon_id(archive.read(addon_xml).decode("utf-8", "replace"))
         if not addon_id.startswith("repository."):
-            raise RuntimeError("Zip bir repository eklentisi degil: {0}".format(addon_id))
+            raise RuntimeError(text(30012).format(addon_id))
         extract_safe(archive, addons_dir)
     return addon_id
 
@@ -131,11 +135,11 @@ def read_addon_id(addon_xml):
     marker = 'id="'
     start = addon_xml.find(marker)
     if start == -1:
-        raise RuntimeError("addon.xml icinde id bulunamadi")
+        raise RuntimeError(text(30013))
     start += len(marker)
     end = addon_xml.find('"', start)
     if end == -1:
-        raise RuntimeError("addon.xml icinde id okunamadi")
+        raise RuntimeError(text(30014))
     return addon_xml[start:end]
 
 
@@ -144,7 +148,7 @@ def extract_safe(archive, target_dir):
     for member in archive.infolist():
         destination = os.path.abspath(os.path.join(target_dir, member.filename))
         if not destination.startswith(target_dir + os.sep):
-            raise RuntimeError("Guvenli olmayan zip yolu: {0}".format(member.filename))
+            raise RuntimeError(text(30015).format(member.filename))
     archive.extractall(target_dir)
 
 

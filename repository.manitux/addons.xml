@@ -50,7 +50,7 @@
 </addon>
 <addon id="script.manitux.repoinstaller"
        name="Manitux Repo Installer"
-       version="1.0.0"
+       version="1.0.1"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>

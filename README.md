@@ -15,6 +15,6 @@ Kodi'de `Install from zip file` ile bu zip kurulduktan sonra eklentiler `Manitux
 
 Kurucu eklenti zip:
 
-https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/script.manitux.repoinstaller-1.0.0.zip
+https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/script.manitux.repoinstaller-1.0.1.zip
 
 Bu eklenti acildiginda dialog penceresine sadece `mntxrepo` yazilabilir. Eklenti `https://tinyurl.com/mntxrepo` adresini uzun repository zip adresine cozer, indirir ve repository eklentisini Kodi'ye kurar.

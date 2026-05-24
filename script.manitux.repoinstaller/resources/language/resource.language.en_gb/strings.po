@@ -1,0 +1,80 @@
+# Kodi Media Center language file
+# Addon Name: Manitux Repo Installer
+# Addon id: script.manitux.repoinstaller
+# Addon Provider: manitux
+msgid ""
+msgstr ""
+"Project-Id-Version: script.manitux.repoinstaller\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-24 00:00+0000\n"
+"PO-Revision-Date: 2026-05-24 00:00+0000\n"
+"Last-Translator: manitux\n"
+"Language-Team: English\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30000"
+msgid "Enter short repository code or URL"
+msgstr "Enter short repository code or URL"
+
+msgctxt "#30001"
+msgid "Resolved address does not look like a zip file:"
+msgstr "Resolved address does not look like a zip file:"
+
+msgctxt "#30002"
+msgid "Continue?"
+msgstr "Continue?"
+
+msgctxt "#30003"
+msgid "Repository zip address found:"
+msgstr "Repository zip address found:"
+
+msgctxt "#30004"
+msgid "Install?"
+msgstr "Install?"
+
+msgctxt "#30005"
+msgid "Downloading repository zip"
+msgstr "Downloading repository zip"
+
+msgctxt "#30006"
+msgid "Short address could not be resolved"
+msgstr "Short address could not be resolved"
+
+msgctxt "#30007"
+msgid "Operation cancelled"
+msgstr "Operation cancelled"
+
+msgctxt "#30008"
+msgid "Repository installed"
+msgstr "Repository installed"
+
+msgctxt "#30009"
+msgid "Repository could not be installed"
+msgstr "Repository could not be installed"
+
+msgctxt "#30010"
+msgid "No add-on folder found in zip"
+msgstr "No add-on folder found in zip"
+
+msgctxt "#30011"
+msgid "No addon.xml found in zip"
+msgstr "No addon.xml found in zip"
+
+msgctxt "#30012"
+msgid "Zip is not a repository add-on: {0}"
+msgstr "Zip is not a repository add-on: {0}"
+
+msgctxt "#30013"
+msgid "No id found in addon.xml"
+msgstr "No id found in addon.xml"
+
+msgctxt "#30014"
+msgid "Could not read id from addon.xml"
+msgstr "Could not read id from addon.xml"
+
+msgctxt "#30015"
+msgid "Unsafe zip path: {0}"
+msgstr "Unsafe zip path: {0}"
