@@ -48,6 +48,28 @@
         </assets>
     </extension>
 </addon>
+<addon id="plugin.video.filmmakinesi"
+       name="FilmMakinesi"
+       version="1.0.0"
+       provider-name="seyirTURK">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.tlsclient"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>FilmMakinesi Kodi video eklentisi</summary>
+        <description>filmmakinesi.to uzerinden film listeler, kaynaklari cozer ve Kodi'de oynatir.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
+</addon>
 <addon id="script.manitux.repoinstaller"
        name="Manitux Repo Installer"
        version="1.0.2"
