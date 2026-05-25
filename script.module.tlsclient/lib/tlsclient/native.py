@@ -35,7 +35,10 @@ def load_library():
         return _LIB
 
     path = library_path()
-    lib = ctypes.CDLL(path)
+    try:
+        lib = ctypes.CDLL(path)
+    except OSError as exc:
+        raise NativeLibraryError("Failed to load tls-client native library at %s: %s" % (path, exc))
 
     for name in (
         "request",
@@ -136,10 +139,11 @@ def _is_android() -> bool:
 
 
 def _android_abi(arch: str) -> str:
+    bits = struct.calcsize("P") * 8
     if arch in ("aarch64", "arm64"):
-        return "arm64-v8a"
+        return "arm64-v8a" if bits == 64 else "armeabi-v7a"
     if arch in ("x86_64", "amd64"):
-        return "x86_64"
+        return "x86_64" if bits == 64 else "x86"
     if arch == "x86":
         return "x86"
     return "armeabi-v7a"
