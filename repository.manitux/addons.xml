@@ -28,8 +28,8 @@
 </addon>
 <addon id="plugin.video.hdfilmcehennemi"
        name="HDFilmCehennemi"
-       version="1.0.5"
-       provider-name="seyirTURK">
+       version="1.0.6"
+       provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.tlsclient"/>
@@ -50,8 +50,8 @@
 </addon>
 <addon id="plugin.video.filmmakinesi"
        name="FilmMakinesi"
-       version="1.0.2"
-       provider-name="seyirTURK">
+       version="1.0.3"
+       provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.tlsclient"/>

@@ -83,8 +83,6 @@ def search():
 def detail(url):
     page = site.get(url)
     info = site.parse_detail(page, url)
-    for episode in info.get("episodes", []):
-        add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
     if info["sources"]:
         for source in info["sources"]:
             add_video(
@@ -95,8 +93,18 @@ def detail(url):
                 info["plot"],
                 {"video_id": source.get("video_id", "")},
             )
-    else:
+    if not is_episode_url(url):
+        for episode in info.get("episodes", []):
+            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
+    if not info["sources"] and is_episode_url(url):
+        for episode in info.get("episodes", []):
+            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
+    if not info["sources"] and not info.get("episodes"):
         xbmcgui.Dialog().notification("HDFilmCehennemi", "Video kaynagi bulunamadi", xbmcgui.NOTIFICATION_WARNING, 3000)
+
+
+def is_episode_url(url):
+    return "/sezon-" in (url or "").lower() and "/bolum-" in (url or "").lower()
 
 
 def play_iframe(url, referer=None):

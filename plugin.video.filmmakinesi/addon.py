@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import re
 import sys
 
 import xbmcaddon
@@ -82,8 +83,6 @@ def search():
 def detail(url):
     page = site.get(url)
     info = site.parse_detail(page, url)
-    for episode in info.get("episodes", []):
-        add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
     if info["sources"]:
         for source in info["sources"]:
             add_video(
@@ -94,8 +93,22 @@ def detail(url):
                 info["plot"],
                 {"referer": url},
             )
-    else:
+    if not is_episode_url(url):
+        for episode in info.get("episodes", []):
+            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
+    if not info["sources"] and is_episode_url(url):
+        for episode in info.get("episodes", []):
+            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
+    if not info["sources"] and not info.get("episodes"):
         xbmcgui.Dialog().notification("FilmMakinesi", "Video kaynagi bulunamadi", xbmcgui.NOTIFICATION_WARNING, 3000)
+
+
+def is_episode_url(url):
+    lowered = (url or "").lower()
+    return (
+        ("/sezon-" in lowered and "/bolum-" in lowered)
+        or re.search(r"\d+-sezon.*\d+-b[oö]lum", lowered) is not None
+    )
 
 
 def play_iframe(url, referer=None):

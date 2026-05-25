@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import base64
+import binascii
 import json
 import re
 import string
@@ -23,7 +24,12 @@ class VideoExtractor(object):
         self.session = tlsclient.Session(client_identifier=self.CLIENT_IDENTIFIERS[0])
 
     def headers(self, referer=None):
-        headers = {"User-Agent": self.user_agent}
+        headers = {
+            "User-Agent": self.user_agent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+        }
         if referer:
             headers["Referer"] = referer
         return headers
@@ -35,11 +41,11 @@ class VideoExtractor(object):
         embed_origin = self.origin(url)
         subs = []
 
-        source = self._decode_obfuscated_source(page)
+        source = self._extract_obfuscated_video_link(page)
         unpacked = self._unpack_first_eval(page)
         if unpacked:
             if not source:
-                source = self._decode_obfuscated_source(unpacked)
+                source = self._extract_obfuscated_video_link(unpacked)
             if not source:
                 source = self._first(r"sources\s*:\s*\[\s*\{\s*file\s*:\s*['\"]([^'\"]+)", unpacked, re.S)
             if not source:
@@ -237,6 +243,187 @@ class VideoExtractor(object):
             else:
                 out.append(char)
         return "".join(out)
+
+    def _extract_obfuscated_video_link(self, html):
+        for candidate in self._get_base64_candidates_from_html(html):
+            source = self._try_decrypt_candidate(candidate)
+            if source:
+                return source
+        source = self._decode_obfuscated_source(html)
+        if source:
+            return self._get_url(source)
+        return self._direct_video_link(html)
+
+    def _try_decrypt_candidate(self, value):
+        strategies = (
+            lambda x: self._unmix(self._rot13(self._base64_decode_js(x[::-1]))),
+            lambda x: self._unmix(self._base64_decode_js(self._rot13(x))[::-1]),
+            lambda x: self._unmix(self._rot13(self._base64_decode_js(x))[::-1]),
+            lambda x: self._unmix(self._base64_decode_js(self._base64_decode_js(x[::-1]))),
+            lambda x: self._unmix(self._base64_decode_js(self._rot13(x)[::-1])),
+            self._decrypt_rot13_base64_reverse_unmix,
+            self._decrypt_reversed_double_base64_unmix,
+            self._decrypt_text_base64_rot13_reverse_unmix,
+            self._decrypt_rot13_reversed_base64_unmix,
+        )
+        for decoder in strategies:
+            try:
+                decoded = decoder(value)
+            except Exception:
+                decoded = None
+            source = self._get_url(decoded)
+            if source:
+                return source
+        return None
+
+    def _decrypt_rot13_base64_reverse_unmix(self, value):
+        decoded = self._base64_decode_js(self._rot13(value))
+        if not decoded:
+            return None
+        return self._get_url(self._unmix(decoded[::-1]))
+
+    def _decrypt_reversed_double_base64_unmix(self, value):
+        first = self._base64_decode_js(value[::-1])
+        if not first:
+            return None
+        second = self._base64_decode_js(first)
+        if not second:
+            return None
+        return self._get_url(self._unmix(second))
+
+    def _decrypt_text_base64_rot13_reverse_unmix(self, value):
+        decoded = self._base64_decode_js(value)
+        if not decoded or self._printable_ratio(decoded) <= 0.75:
+            return None
+        return self._get_url(self._unmix(self._rot13(decoded)[::-1]))
+
+    def _decrypt_rot13_reversed_base64_unmix(self, value):
+        decoded = self._base64_decode_js(self._rot13(value)[::-1])
+        if not decoded or self._printable_ratio(decoded) <= 0.75:
+            return None
+        return self._get_url(self._unmix(decoded))
+
+    def _get_base64_candidates_from_html(self, html):
+        candidates = []
+        self._add_direct_array_values(html, candidates)
+        self._add_quoted_base64_values(html, candidates)
+        unpacked = self._unpack_first_eval(html)
+        if unpacked:
+            self._add_direct_array_values(unpacked, candidates)
+            self._add_quoted_base64_values(unpacked, candidates)
+        self._add_packed_array_values(html, candidates)
+        result = []
+        for candidate in candidates:
+            candidate = (candidate or "").replace("\\/", "/").strip()
+            if self._is_likely_encrypted_payload(candidate) and candidate not in result:
+                result.append(candidate)
+        return result
+
+    def _add_direct_array_values(self, html, candidates):
+        array_pattern = re.compile(
+            r"\b\w+\s*\(\s*(\[\s*(?:\"[^\"]*\"|'[^']*')\s*(?:,\s*(?:\"[^\"]*\"|'[^']*')\s*)*\])\s*\)",
+            re.S,
+        )
+        for match in array_pattern.finditer(html or ""):
+            array_text = match.group(1)
+            parsed = self._parse_string_array(array_text)
+            if parsed:
+                candidates.append(parsed)
+            else:
+                parts = re.findall(r"""["']([^"']+)["']""", array_text)
+                candidates.append("".join(parts))
+
+    def _add_quoted_base64_values(self, html, candidates):
+        pattern = re.compile(r"""["'](?P<value>(?:={0,2})[A-Za-z0-9+/]{80,}={0,2})["']""", re.S)
+        for match in pattern.finditer(html or ""):
+            candidates.append(match.group("value"))
+
+    def _add_packed_array_values(self, html, candidates):
+        eval_pattern = re.compile(r"eval\(function\(p,a,c,k,e,d\).*?\.split\(['\"]\|['\"]\),\d+,\{\}\)\)", re.S)
+        for eval_match in eval_pattern.finditer(html or ""):
+            body = eval_match.group(0)
+            dict_match = re.search(r"""['"]([^'"]*)['"]\.split""", body, re.S)
+            if not dict_match:
+                continue
+            dictionary = dict_match.group(1).split("|")
+            lookup = string.digits + string.ascii_lowercase + string.ascii_uppercase
+            for array_match in re.finditer(r"""\[\s*(["'].*?["']\s*,?\s*)+\s*\]""", body, re.S):
+                parts = []
+                for part_match in re.finditer(r"""["'](?P<val>.*?)["']""", array_match.group(0), re.S):
+                    part = re.sub(
+                        r"\w+",
+                        lambda m: self._base62_lookup(m.group(0), lookup, dictionary),
+                        part_match.group("val"),
+                    )
+                    parts.append(part)
+                candidates.append("".join(parts))
+
+    def _parse_string_array(self, array_text):
+        normalized = re.sub(
+            r"'([^'\\]*(?:\\.[^'\\]*)*)'",
+            lambda m: json.dumps(m.group(1)),
+            array_text,
+        )
+        try:
+            return "".join(json.loads(normalized))
+        except (TypeError, ValueError):
+            return ""
+
+    def _base62_lookup(self, value, lookup, dictionary):
+        index = 0
+        multiplier = 1
+        for char in reversed(value):
+            char_index = lookup.find(char)
+            if char_index == -1:
+                return value
+            index += char_index * multiplier
+            multiplier *= 62
+        if index < len(dictionary) and dictionary[index]:
+            return dictionary[index]
+        return value
+
+    def _base64_decode_js(self, value):
+        if not value:
+            return ""
+        try:
+            if not isinstance(value, bytes):
+                value = value.encode("latin-1")
+            value += b"=" * ((4 - len(value) % 4) % 4)
+            return base64.b64decode(value).decode("latin-1")
+        except (TypeError, binascii.Error, UnicodeError):
+            return ""
+
+    def _is_likely_encrypted_payload(self, value):
+        if len(value) < 40:
+            return False
+        count = sum(1 for char in value if char.isalnum() or char in "+/=")
+        return float(count) / len(value) > 0.85
+
+    def _unmix(self, value):
+        chars = []
+        for idx, char in enumerate(value):
+            code = (ord(char) - (399756995 % (idx + 5)) + 256) % 256
+            chars.append(chr(code))
+        return "".join(chars)
+
+    def _printable_ratio(self, value):
+        if not value:
+            return 0
+        printable = sum(1 for char in value if char in "\r\n\t" or " " <= char <= "~")
+        return float(printable) / len(value)
+
+    def _get_url(self, value):
+        value = (value or "").replace("\\/", "/").replace("\\u0026", "&").replace("u0026", "&")
+        match = re.search(r"""https?://[^\s"'|<>]+""", value)
+        return match.group(0) if match else None
+
+    def _direct_video_link(self, html):
+        unpacked = self._unpack_first_eval(html)
+        for source in (unpacked, html):
+            match = re.search(r"""https?:\\?/\\?/[^"'\s<>]+?\.m3u8[^"'\s<>]*""", source or "", re.I)
+            if match:
+                return match.group(0).replace("\\/", "/")
+        return None
 
     @staticmethod
     def _first(pattern, text, flags=0):

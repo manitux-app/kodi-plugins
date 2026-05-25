@@ -182,6 +182,7 @@ def parse_related(page, base_url):
 
 def parse_video_sources(page, base_url):
     sources = []
+    seen_video_ids = set()
     language_labels = {}
     for button in re.findall(r'<button\b[^>]*class="[^"]*\blanguage-link\b[^"]*"[^>]*>.*?</button>', page, re.S):
         lang = (_attr(button, "data-lang") or "").lower()
@@ -196,14 +197,40 @@ def parse_video_sources(page, base_url):
             video_id = _attr(button, "data-video")
             source_text = _clean(button).replace("(HDrip Xbet)", "").strip()
             label = " | ".join(x for x in [lang_label, source_text] if x).strip(" |")
-            if video_id:
+            if video_id and video_id not in seen_video_ids:
+                seen_video_ids.add(video_id)
                 sources.append({
                     "label": label or video_id,
                     "video_id": video_id,
                     "url": base_url.rstrip("/") + "/video/{0}/".format(video_id),
                     "is_trailer": False,
                 })
+    if len([x for x in sources if not x.get("is_trailer")]) <= 1:
+        sources = sources[:1] if sources and sources[0].get("is_trailer") else []
+        seen_video_ids = set()
+        for match in re.finditer(r'<button\b[^>]*class=["\'][^"\']*\balternative-link\b[^"\']*["\'][^>]*>.*?</button>', page or "", re.S | re.I):
+            button = match.group(0)
+            video_id = _attr(button, "data-video")
+            if not video_id or video_id in seen_video_ids:
+                continue
+            seen_video_ids.add(video_id)
+            lang_code = _nearest_language_code(page, match.start())
+            lang_label = language_labels.get(lang_code, lang_code.upper())
+            source_text = _clean(button).replace("(HDrip Xbet)", "").strip()
+            label = " | ".join(x for x in [lang_label, source_text] if x).strip(" |")
+            sources.append({
+                "label": label or video_id,
+                "video_id": video_id,
+                "url": base_url.rstrip("/") + "/video/{0}/".format(video_id),
+                "is_trailer": False,
+            })
     return sources
+
+
+def _nearest_language_code(page, position):
+    before = (page or "")[:position]
+    matches = list(re.finditer(r'<div\b[^>]*class=["\'][^"\']*\balternative-links\b[^"\']*["\'][^>]*\bdata-lang=["\']([^"\']+)["\']', before, re.I))
+    return matches[-1].group(1).lower() if matches else ""
 
 
 def parse_iframe_from_video_response(payload):

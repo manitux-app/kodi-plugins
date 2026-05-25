@@ -122,19 +122,23 @@ def parse_media_info(page, url, base_url):
 
 def parse_video_sources(page, base_url):
     sources = []
+    seen_urls = set()
     trailer = _attr(_first(r'<a[^>]*class="[^"]*\btrailer-button\b[^"]*"[^>]*>', page, re.S), "data-video_url")
     if trailer:
         sources.append({"label": "Fragman", "url": fix_url(trailer, base_url), "is_trailer": True})
-    for tag in re.findall(r'<a\b[^>]*data-video_url="[^"]+"[^>]*>.*?</a>', page, re.S):
+    for tag in re.findall(r'<(?:a|button)\b[^>]*data-video_url=["\'][^"\']+["\'][^>]*>.*?</(?:a|button)>', page, re.S | re.I):
         url = _attr(tag, "data-video_url")
         label = _clean(tag) or "Play"
-        if url and "youtube" not in url.lower():
-            sources.append({"label": label, "url": fix_url(url, base_url), "is_trailer": False})
+        fixed_url = fix_url(url, base_url)
+        if url and "youtube" not in url.lower() and fixed_url not in seen_urls:
+            seen_urls.add(fixed_url)
+            sources.append({"label": label, "url": fixed_url, "is_trailer": False})
     if len(sources) <= 1:
         iframe = _first(r'<iframe\b[^>]*(?:data-src|src)="[^"]+"[^>]*>', page, re.S)
         iframe_url = _attr(iframe, "data-src") or _attr(iframe, "src")
-        if iframe_url and "youtube" not in iframe_url.lower():
-            sources.append({"label": "Play", "url": fix_url(iframe_url, base_url), "is_trailer": False})
+        fixed_url = fix_url(iframe_url, base_url)
+        if iframe_url and "youtube" not in iframe_url.lower() and fixed_url not in seen_urls:
+            sources.append({"label": "Play", "url": fixed_url, "is_trailer": False})
     return sources
 
 
