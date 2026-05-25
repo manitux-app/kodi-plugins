@@ -83,7 +83,8 @@ def search():
 def detail(url):
     page = site.get(url)
     info = site.parse_detail(page, url)
-    for source in info.get("sources", []):
+    sources = [source for source in info.get("sources", []) if not source.get("is_trailer")] or info.get("sources", [])
+    for source in sources:
         add_video(
             source["label"],
             "play_iframe" if source.get("is_trailer") else "play_source",
@@ -92,7 +93,10 @@ def detail(url):
             info["plot"],
             {"referer": source.get("referer") or url, "label": source["label"]},
         )
-    if not info.get("sources"):
+    if not sources:
+        for episode in info.get("episodes", []):
+            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
+    if not sources and not info.get("episodes"):
         xbmcgui.Dialog().notification("FilmEkseni", "Video kaynagi bulunamadi", xbmcgui.NOTIFICATION_WARNING, 3000)
 
 
