@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import re
 import sys
 
 import xbmc
@@ -107,7 +108,37 @@ def is_episode_url(url):
     return "/sezon-" in (url or "").lower() and "/bolum-" in (url or "").lower()
 
 
+def youtube_plugin_url(url):
+    video_id = ""
+    for pattern in (
+        r"(?:youtube\.com/embed/|youtube\.com/watch\?v=|youtu\.be/)([A-Za-z0-9_-]{6,})",
+        r"[?&]v=([A-Za-z0-9_-]{6,})",
+    ):
+        match = re.search(pattern, url or "", re.I)
+        if match:
+            video_id = match.group(1)
+            break
+    return "plugin://plugin.video.youtube/play/?video_id=" + video_id if video_id else ""
+
+
+def play_youtube(url):
+    plugin_url = youtube_plugin_url(url)
+    if not plugin_url:
+        xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
+        return
+    try:
+        xbmcaddon.Addon(id="plugin.video.youtube")
+    except Exception:
+        xbmcgui.Dialog().notification("YouTube", "plugin.video.youtube gerekli", xbmcgui.NOTIFICATION_WARNING, 3000)
+        xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
+        return
+    xbmcplugin.setResolvedUrl(HANDLE, True, xbmcgui.ListItem(path=plugin_url))
+
+
 def play_iframe(url, referer=None):
+    if youtube_plugin_url(url):
+        play_youtube(url)
+        return
     stream, subtitles = extractor.resolve(url, referer)
     if not stream:
         xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())

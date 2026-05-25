@@ -15,17 +15,17 @@ except ImportError:
     from urllib import urlencode
 
 from resources.lib.extractor import VideoExtractor
-from resources.lib.site import FilmMakinesiSite
+from resources.lib.site import FilmEkseniSite
 
 
-ADDON_ID = "plugin.video.filmmakinesi"
+ADDON_ID = "plugin.video.filmekseni"
 ADDON = xbmcaddon.Addon(id=ADDON_ID)
 HANDLE = int(sys.argv[1])
-BASE_URL = ADDON.getSetting("base_url") or "https://filmmakinesi.to"
+BASE_URL = ADDON.getSetting("base_url") or "https://filmekseni.cc"
 UA = ADDON.getSetting("user_agent") or "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
-site = FilmMakinesiSite(BASE_URL, UA)
-extractor = VideoExtractor(UA)
+site = FilmEkseniSite(BASE_URL, UA)
+extractor = VideoExtractor(UA, BASE_URL)
 
 
 def build_url(query):
@@ -73,7 +73,7 @@ def list_page(url, page_number=1):
 
 
 def search():
-    query = xbmcgui.Dialog().input("FilmMakinesi Ara")
+    query = xbmcgui.Dialog().input("FilmEkseni Ara")
     if query:
         for item in site.search(query):
             add_directory(item["title"], "detail", item["url"], item["image"], item.get("plot", ""))
@@ -83,32 +83,22 @@ def search():
 def detail(url):
     page = site.get(url)
     info = site.parse_detail(page, url)
-    if info["sources"]:
-        for source in info["sources"]:
-            add_video(
-                source["label"],
-                "play_iframe",
-                source["url"],
-                info["image"],
-                info["plot"],
-                {"referer": url},
-            )
-    if not is_episode_url(url):
-        for episode in info.get("episodes", []):
-            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
-    if not info["sources"] and is_episode_url(url):
-        for episode in info.get("episodes", []):
-            add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
-    if not info["sources"] and not info.get("episodes"):
-        xbmcgui.Dialog().notification("FilmMakinesi", "Video kaynagi bulunamadi", xbmcgui.NOTIFICATION_WARNING, 3000)
+    for source in info.get("sources", []):
+        add_video(
+            source["label"],
+            "play_iframe" if source.get("is_trailer") else "play_source",
+            source["url"],
+            info["image"],
+            info["plot"],
+            {"referer": source.get("referer") or url, "label": source["label"]},
+        )
+    if not info.get("sources"):
+        xbmcgui.Dialog().notification("FilmEkseni", "Video kaynagi bulunamadi", xbmcgui.NOTIFICATION_WARNING, 3000)
 
 
-def is_episode_url(url):
-    lowered = (url or "").lower()
-    return (
-        ("/sezon-" in lowered and "/bolum-" in lowered)
-        or re.search(r"\d+-sezon.*\d+-b[oö]lum", lowered) is not None
-    )
+def play_source(url, referer=None, label=""):
+    iframe = site.fetch_iframe(url, referer)
+    play_iframe(iframe, url, label)
 
 
 def youtube_plugin_url(url):
@@ -138,11 +128,11 @@ def play_youtube(url):
     xbmcplugin.setResolvedUrl(HANDLE, True, xbmcgui.ListItem(path=plugin_url))
 
 
-def play_iframe(url, referer=None):
+def play_iframe(url, referer=None, label=""):
     if youtube_plugin_url(url):
         play_youtube(url)
         return
-    stream, subtitles = extractor.resolve(url, referer)
+    stream, subtitles = extractor.resolve(url, referer, label)
     if not stream:
         xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
         return
@@ -165,8 +155,10 @@ def run():
         search()
     elif action == "detail":
         detail(url)
+    elif action == "play_source":
+        play_source(url, params.get("referer"), params.get("label", ""))
     elif action == "play_iframe":
-        play_iframe(url, params.get("referer"))
+        play_iframe(url, params.get("referer"), params.get("label", ""))
     xbmcplugin.endOfDirectory(HANDLE)
 
 
