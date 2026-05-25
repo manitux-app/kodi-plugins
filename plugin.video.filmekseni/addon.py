@@ -83,7 +83,8 @@ def search():
 def detail(url):
     page = site.get(url)
     info = site.parse_detail(page, url)
-    sources = [source for source in info.get("sources", []) if not source.get("is_trailer")] or info.get("sources", [])
+    sources = info.get("sources", [])
+    playable_sources = [source for source in sources if not source.get("is_trailer")]
     for source in sources:
         add_video(
             source["label"],
@@ -93,7 +94,7 @@ def detail(url):
             info["plot"],
             {"referer": source.get("referer") or url, "label": source["label"]},
         )
-    if not sources:
+    if not playable_sources:
         for episode in info.get("episodes", []):
             add_directory(episode["title"], "detail", episode["url"], info["image"], info["plot"])
     if not sources and not info.get("episodes"):

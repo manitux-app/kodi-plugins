@@ -280,7 +280,10 @@ def _parse_movie_json_ld(page):
 
 
 def _poster_blocks(page):
-    starts = [m.start() for m in re.finditer(r'<div[^>]*class=["\'][^"\']*\bposter\b[^"\']*["\'][^>]*>', page or "", re.I)]
+    starts = [
+        m.start()
+        for m in re.finditer(r'<div[^>]*class=["\'][^"\']*(?<![-\w])poster(?![-\w])[^"\']*["\'][^>]*>', page or "", re.I)
+    ]
     blocks = []
     for index, start in enumerate(starts):
         end = starts[index + 1] if index + 1 < len(starts) else len(page)
