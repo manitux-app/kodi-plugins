@@ -152,4 +152,46 @@
         <license>MIT</license>
     </extension>
 </addon>
+<addon id="script.module.manituxhttp" name="Manitux HTTP" version="1.0.0" provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.requests" optional="true"/>
+        <import addon="script.module.beautifulsoup4" optional="true"/>
+        <import addon="script.module.certifi" optional="true"/>
+        <import addon="script.module.idna" optional="true"/>
+        <import addon="script.module.six" optional="true"/>
+        <import addon="script.module.urllib3" optional="true"/>
+    </requires>
+    <extension point="xbmc.python.module" library="lib"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Shared pure Python HTTP helper for Manitux Kodi add-ons.</summary>
+        <summary lang="tr_TR">Manitux Kodi eklentileri icin ortak saf Python HTTP yardimcisi.</summary>
+        <description lang="en_GB">Small requests-compatible HTTP wrapper with urllib fallback.</description>
+        <description lang="tr_TR">Requests uyumlu, urllib yedekli kucuk HTTP sarmalayicisi.</description>
+        <platform>all</platform>
+        <license>MIT</license>
+    </extension>
+</addon>
+<addon id="plugin.video.dizibox"
+       name="DiziBOX"
+       version="1.0.0"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.manituxhttp"/>
+        <import addon="plugin.video.youtube" optional="true"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>DiziBOX Kodi video eklentisi</summary>
+        <description>DiziBOX uzerinden dizi arsivi, bolumler ve video kaynaklarini listeler.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
+</addon>
 </addons>
