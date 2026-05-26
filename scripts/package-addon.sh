@@ -151,6 +151,17 @@ def make_zip(version):
     return zip_path
 
 
+def copy_icon():
+    icon_path = addon_dir / "icon.png"
+    target_dir = repo_root / repository_id / addon_id
+    target_icon = target_dir / "icon.png"
+    if icon_path.exists():
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target_icon.write_bytes(icon_path.read_bytes())
+        return target_icon
+    return None
+
+
 current_version = addon_version(addon_xml)
 target_version = current_version
 
@@ -164,11 +175,13 @@ if target_version != current_version:
 
 update_repository_block()
 zip_path = make_zip(target_version)
+icon_path = copy_icon()
 md5 = hashlib.md5(repo_xml.read_bytes()).hexdigest()
 repo_md5.write_text(md5, encoding="utf-8", newline="")
 
 print(f"Addon: {addon_id}")
 print(f"Version: {target_version}")
 print(f"Zip: {zip_path}")
+print(f"Icon: {icon_path if icon_path else 'not found'}")
 print(f"MD5: {md5}")
 PY

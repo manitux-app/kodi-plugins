@@ -7,6 +7,8 @@ Bu dosya, Codex ile yapilan onemli proje degisikliklerini kisa notlarla takip et
 - `plugin.video.dizibox` surumu `1.0.1` olarak yukseltildi ve paketleme icin repo metadata'si guncellendi.
 - Kodi eklentilerini surum guncelleyip repo zip'i uretecek `scripts/package-addon.ps1` paketleme scripti eklendi.
 - Linux/macOS icin `scripts/package-addon.sh` paketleme scripti ve script kullanimlari icin `scripts/README.md` eklendi.
+- Paketleme scriptleri zip'in yanina ilgili eklentinin `icon.png` dosyasini da kopyalayacak sekilde guncellendi.
+- PowerShell paketleme scriptinde zip icindeki yollar Kodi uyumlulugu icin `/` ayiraci kullanacak sekilde duzeltildi.
 - Proje hafizasi icin `AGENTS.md` eklendi.
 - Codex oturumlari arasinda yapilan isleri izlemek icin `CHANGELOG.md` eklendi.
 - `plugin.video.dizibox` icinde fragman kaynaklarinin `DiziBox` yerine `Fragman` gorunmesi saglandi.

@@ -89,8 +89,51 @@ function New-AddonZip {
         Remove-Item -LiteralPath $zipPath -Force
     }
 
-    Compress-Archive -LiteralPath $addonDir -DestinationPath $zipPath -CompressionLevel Optimal
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $zip = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+    try {
+        $rootPrefix = (Resolve-Path -LiteralPath $RepoRoot).Path.TrimEnd("\", "/") + [System.IO.Path]::DirectorySeparatorChar
+        $files = Get-ChildItem -LiteralPath $addonDir -Recurse -File | Sort-Object FullName
+        foreach ($file in $files) {
+            $relativePath = $file.FullName.Substring($rootPrefix.Length)
+            $entryName = $relativePath.Replace([System.IO.Path]::DirectorySeparatorChar, "/")
+            if ([System.IO.Path]::AltDirectorySeparatorChar -ne [System.IO.Path]::DirectorySeparatorChar) {
+                $entryName = $entryName.Replace([System.IO.Path]::AltDirectorySeparatorChar, "/")
+            }
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $zip,
+                $file.FullName,
+                $entryName,
+                [System.IO.Compression.CompressionLevel]::Optimal
+            ) | Out-Null
+        }
+    }
+    finally {
+        $zip.Dispose()
+    }
+
     return $zipPath
+}
+
+function Copy-AddonIcon {
+    param(
+        [string]$RepoRoot,
+        [string]$AddonId,
+        [string]$RepositoryId
+    )
+
+    $iconPath = Join-Path (Join-Path $RepoRoot $AddonId) "icon.png"
+    $targetDir = Join-Path (Join-Path $RepoRoot $RepositoryId) $AddonId
+    $targetIcon = Join-Path $targetDir "icon.png"
+
+    if (Test-Path -LiteralPath $iconPath) {
+        Copy-Item -LiteralPath $iconPath -Destination $targetIcon -Force
+        return $targetIcon
+    }
+
+    return $null
 }
 
 $root = Get-RepoRoot
@@ -125,6 +168,7 @@ if ($targetVersion -ne $currentVersion) {
 
 Update-RepositoryAddonBlock -RepositoryXmlPath $repoXml -AddonId $AddonId -AddonXmlPath $addonXml
 $zipPath = New-AddonZip -RepoRoot $root -AddonId $AddonId -Version $targetVersion -RepositoryId $RepositoryId
+$iconPath = Copy-AddonIcon -RepoRoot $root -AddonId $AddonId -RepositoryId $RepositoryId
 
 $hash = (Get-FileHash -LiteralPath $repoXml -Algorithm MD5).Hash.ToLower()
 Set-Content -LiteralPath $repoMd5 -Value $hash -NoNewline
@@ -132,4 +176,10 @@ Set-Content -LiteralPath $repoMd5 -Value $hash -NoNewline
 Write-Host "Addon: $AddonId"
 Write-Host "Version: $targetVersion"
 Write-Host "Zip: $zipPath"
+if ($iconPath) {
+    Write-Host "Icon: $iconPath"
+}
+else {
+    Write-Host "Icon: not found"
+}
 Write-Host "MD5: $hash"

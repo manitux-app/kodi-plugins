@@ -7,6 +7,7 @@ Scriptler sunlari yapar:
 - `addon.xml` surumunu istege bagli gunceller.
 - `repository.manitux/addons.xml` icindeki ilgili addon kaydini gunceller.
 - `repository.manitux/<addon-id>/<addon-id>-<version>.zip` dosyasini uretir.
+- Eklentinin `icon.png` dosyasini zip ile ayni klasore kopyalar; mevcut icon varsa uzerine yazar.
 - `repository.manitux/addons.xml.md5` dosyasini yeniler.
 
 ## Windows / PowerShell
