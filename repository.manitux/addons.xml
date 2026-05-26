@@ -174,7 +174,7 @@
 </addon>
 <addon id="plugin.video.dizibox"
        name="DiziBOX"
-       version="1.0.1"
+       version="1.0.2"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
