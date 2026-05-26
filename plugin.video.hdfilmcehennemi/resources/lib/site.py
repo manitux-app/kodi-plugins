@@ -15,7 +15,7 @@ class HDFilmCehennemiSite(object):
     def __init__(self, base_url, user_agent):
         self.base_url = base_url.rstrip("/")
         self.user_agent = user_agent
-        self.session = manituxhttp.Session()
+        self.session = manituxhttp.Session(use_cloudscraper=True)
 
     def headers(self, referer=None, ajax=False):
         headers = {
@@ -27,8 +27,15 @@ class HDFilmCehennemiSite(object):
         if referer:
             headers["Referer"] = referer
         if ajax:
+            headers["Accept"] = "application/json, text/javascript, */*; q=0.01"
             headers["X-Requested-With"] = "fetch"
             headers["Content-Type"] = "application/json"
+            headers["Origin"] = self.base_url
+            headers["Host"] = "hdfilmcehennemi.nl"
+            headers["Sec-Fetch-Dest"] = "empty"
+            headers["Sec-Fetch-Mode"] = "cors"
+            headers["Sec-Fetch-Site"] = "same-origin"
+            headers.pop("Upgrade-Insecure-Requests", None)
         return headers
 
     def get(self, url, referer=None, ajax=False):
@@ -43,7 +50,7 @@ class HDFilmCehennemiSite(object):
 
     def get_page_items(self, category_url, page_number=1, title=""):
         api_url = self.page_url(category_url, page_number)
-        page = self.get(api_url, referer=category_url, ajax=True)
+        page = self.get_ajax(api_url, referer=category_url)
         html_block = parsers.html_from_load_response(page)
         return parsers.parse_page_items(html_block, self.base_url, title)
 
@@ -70,11 +77,24 @@ class HDFilmCehennemiSite(object):
         return parsers.parse_media_info(page, url, self.base_url)
 
     def fetch_source_iframe(self, video_id, referer):
-        res = self._get(
-            self.base_url + "/video/{0}/".format(video_id),
-            headers=self.headers(referer=referer, ajax=True),
-        )
-        return parsers.parse_iframe_from_video_response(res.text)
+        page = self.get_ajax(self.base_url + "/video/{0}/".format(video_id), referer=referer)
+        return parsers.parse_iframe_from_video_response(page)
+
+    def get_ajax(self, url, referer=None):
+        url = self.absolute(url)
+        try:
+            return self._get(url, headers=self.headers(referer, ajax=True)).text
+        except manituxhttp.HTTPError as exc:
+            if getattr(exc.response, "status_code", None) != 403:
+                raise
+            self._prime_session()
+            return self._get(url, headers=self.headers(self.base_url + "/", ajax=True)).text
+
+    def _prime_session(self):
+        try:
+            self._get(self.base_url + "/", headers=self.headers(self.base_url + "/"))
+        except Exception:
+            pass
 
     def _get(self, url, headers):
         res = self.session.get(url, headers=headers, timeout=25)

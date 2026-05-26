@@ -25,7 +25,7 @@ Baslica klasorler:
 - Elle dosya duzenlerken `apply_patch` kullan.
 - Arama icin once `rg` veya `rg --files` kullan.
 - Eklenti davranisini etkileyen degisikliklerde mumkunse ilgili modulu calistirarak veya statik kontrolle dogrula.
-- Paket/zip dosyalarini ancak kullanici isterse yeniden uret.
+- Paket/zip dosyalarini, surum artirimini ve repository metadata paketleme guncellemelerini kullanici acikca paketleme istediginde yap. Kod degisikligi sonrasi kullanici "paketle" demedikce zip uretme veya surum artirma.
 - Paketleme yapilirken zip dosyasi `repository.manitux/<addon-id>/` altina atilir ve ilgili eklentinin `icon.png` dosyasi da ayni klasore kopyalanir; mevcut icon varsa uzerine yazilir.
 
 ## Hatirlanacaklar

@@ -3,6 +3,17 @@ from __future__ import absolute_import, unicode_literals
 
 import json as json_module
 import ssl
+import os
+import sys
+
+try:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if current_dir not in sys.path:
+        sys.path.insert(0, current_dir)
+        
+    import cloudscraper
+except Exception:
+    cloudscraper = None
 
 try:
     import requests  # type: ignore
@@ -74,11 +85,19 @@ class Response(object):
 
 
 class Session(object):
-    def __init__(self, headers=None, verify=True):
+    def __init__(self, headers=None, verify=True, use_cloudscraper=False):
         self.headers = headers.copy() if headers else {}
         self.verify = verify
-        self._requests_session = requests.Session() if requests is not None else None
+        if use_cloudscraper and cloudscraper is not None:
+            self._requests_session = cloudscraper.create_scraper()
+        else:
+            self._requests_session = requests.Session() if requests is not None else None
+
+        print(self._requests_session)
+            
         self._cookie_jar = cookielib.CookieJar()
+
+        print(self._cookie_jar)
 
     def request(self, method, url, **kwargs):
         headers = self.headers.copy()

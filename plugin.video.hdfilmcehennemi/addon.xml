@@ -18,7 +18,6 @@
         <license>GPL-3.0-or-later</license>
         <assets>
             <icon>icon.png</icon>
-            <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
 </addon>

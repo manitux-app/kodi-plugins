@@ -22,7 +22,7 @@ from resources.lib.site import HDFilmCehennemiSite
 ADDON_ID = "plugin.video.hdfilmcehennemi"
 ADDON = xbmcaddon.Addon(id=ADDON_ID)
 HANDLE = int(sys.argv[1])
-BASE_URL = ADDON.getSetting("base_url") or "https://www.hdfilmcehennemi.com"
+BASE_URL = ADDON.getSetting("base_url") or "https://www.hdfilmcehennemi.nl"
 UA = ADDON.getSetting("user_agent") or "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 site = HDFilmCehennemiSite(BASE_URL, UA)
