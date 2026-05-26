@@ -2,11 +2,17 @@
 from __future__ import absolute_import, unicode_literals
 
 import base64
+import hashlib
 import json
 import re
 import string
 
 import manituxhttp
+
+try:
+    from Crypto.Cipher import AES
+except Exception:
+    AES = None
 
 try:
     from urllib.parse import quote, unquote, urljoin, urlparse, urlunparse
@@ -35,11 +41,17 @@ class DiziBoxExtractor(object):
             return None, []
         url = self.normalize_url(url)
         referer = referer or self.base_url + "/"
+        if "/embed/sheila/" in url:
+            return self.resolve_moly(url, referer, label)
+        if self.is_media_url(url):
+            return url + self.kodi_headers(referer), []
         iframe = self.decode_iframe(url, referer)
         if iframe and iframe != url:
             return self.resolve(iframe, url, label)
 
         host = urlparse(url).netloc.lower()
+        if self.is_site_player(url):
+            return self.resolve_site_player(url, referer, label)
         if "vidmoly" in host or "videobin" in host:
             return self.resolve_vidmoly(url, referer)
         if "ok.ru" in host or "odnoklassniki" in host:
@@ -48,22 +60,29 @@ class DiziBoxExtractor(object):
             return self.resolve_moly(url, referer, label)
 
         page = self.fetch(url, referer)
+        iframe = parsers.parse_iframe(page, url)
+        if iframe and iframe != url:
+            return self.resolve(iframe, url, label)
         source, subtitles = self.extract_jw(page, url, label or "DiziBox")
         if source:
-            return source, subtitles
+            return source + self.kodi_headers(url), subtitles
         return url + self.kodi_headers(referer), []
 
     def decode_iframe(self, url, referer=None):
         if "/player/haydi.php" in url and "?v=" in url:
             value = url.split("?v=", 1)[1].split("&", 1)[0]
-            return self._b64(value)
+            return self._b64(unquote(value))
 
         if "/player/moly/moly.php" in url:
             player_url = url.replace("moly.php?h=", "moly.php?wmode=opaque&h=")
             page = self.fetch(player_url, referer)
             escaped = self._first(r'unescape\(["\'](.*?)["\']\)', page, re.S)
             if escaped:
-                decoded = self._b64(unquote(escaped))
+                decoded = unquote(escaped)
+                iframe = parsers.parse_iframe(decoded, player_url)
+                if iframe:
+                    return iframe
+                decoded = self._b64(decoded)
                 iframe = parsers.parse_iframe(decoded, player_url)
                 if iframe:
                     return iframe
@@ -73,24 +92,49 @@ class DiziBoxExtractor(object):
 
         if "/player/king/king.php" in url:
             player_url = url.replace("king.php?v=", "king.php?wmode=opaque&v=")
-            page = self.fetch(player_url, referer)
-            iframe = parsers.parse_iframe(page, player_url)
-            if iframe:
-                nested = self.fetch(iframe, player_url)
-                direct = self._first(r"file\s*:\s*['\"]([^'\"]+)['\"]", nested, re.S)
-                if direct:
-                    return direct
-                nested_iframe = parsers.parse_iframe(nested, iframe)
-                if nested_iframe:
-                    return nested_iframe
+            return self.extract_player_target(player_url, referer)
 
         return url
 
+    def resolve_site_player(self, url, referer=None, label=""):
+        target = self.extract_player_target(url, referer)
+        if target and target != url:
+            return self.resolve(target, url, label)
+        try:
+            page = self.fetch(url, referer)
+        except (manituxhttp.HTTPError, manituxhttp.RequestError):
+            return None, []
+        source, subtitles = self.extract_jw(page, url, label or "DiziBox")
+        if not source:
+            unpacked = self.unpack_first_eval(page)
+            source = self.media_url(unpacked) or self.media_url(page)
+        return (source + self.kodi_headers(url) if source else None), subtitles
+
+    def extract_player_target(self, url, referer=None):
+        page = self.fetch(url, referer)
+        decoded = self.decode_embedded_html(page)
+        target = parsers.parse_iframe(decoded or page, url)
+        if target:
+            return target
+        source = self.media_url(decoded) or self.media_url(page)
+        if source:
+            return source
+        unpacked = self.unpack_first_eval(page)
+        target = parsers.parse_iframe(unpacked, url)
+        if target:
+            return target
+        return self.media_url(unpacked) or ""
+
     def resolve_moly(self, url, referer=None, label=""):
         page = self.fetch(url, referer or self.base_url + "/")
+        decrypted = self.decrypt_cryptojs_page(page)
+        if decrypted:
+            page = decrypted
         source, subtitles = self.extract_jw(page, url, label or "Molystream")
         if not source:
             source = self._first(r"""https?://[^\s"'<>]+?(?:\.m3u8|\.mp4|master\.txt)[^\s"'<>]*""", page)
+        if source:
+            source = self.resolve_hls_variant(source, url) or source
         return (source + self.kodi_headers(url) if source else None), subtitles
 
     def resolve_vidmoly(self, url, referer=None):
@@ -129,14 +173,14 @@ class DiziBoxExtractor(object):
         )
         res.raise_for_status()
         source = self._first(r'(?:ultra|quad|full|hd|sd|low|lowest)","url":"(.*?)"', res.text)
-        return source.replace(r"\u0026", "&") + self.kodi_headers("https://ok.ru/"), []
+        return (source.replace(r"\u0026", "&") + self.kodi_headers("https://ok.ru/") if source else None), []
 
     def extract_jw(self, page, page_url, source_name):
         sources = self._extract_sources(page, page_url, source_name)
         subtitles = self._extract_subtitles(page, page_url)
         if sources:
             return sources[0], subtitles
-        source = self._first(r"""[:=]\s*["']([^"'\s]+(?:\.m3u8|\.mp4|master\.txt)[^"'\s]*)""", page, re.S)
+        source = self._first(r"""[:=]\s*["']([^"'\s]+(?:\.m3u8|\.mp4|master\.txt|/embed/sheila/)[^"'\s]*)""", page, re.S)
         return (parsers.fix_url(source.replace("\\/", "/"), page_url) if source else None), subtitles
 
     def fetch(self, url, referer=None):
@@ -164,6 +208,7 @@ class DiziBoxExtractor(object):
         bits = ["User-Agent=" + quote(self.user_agent)]
         if referer:
             bits.append("Referer=" + quote(referer))
+        bits.append("Accept=" + quote("*/*"))
         return "|" + "&".join(bits)
 
     def normalize_url(self, url):
@@ -212,13 +257,15 @@ class DiziBoxExtractor(object):
         result = []
         for block in re.findall(r"""["']?sources["']?\s*:\s*(\[.*?\])""", page or "", re.S | re.I):
             for item in self._parse_js_list(block):
+                if not isinstance(item, dict):
+                    continue
                 file_url = item.get("file") or item.get("src")
                 if not file_url:
                     continue
                 label = item.get("label")
                 result.append(parsers.fix_url(file_url.replace("\\/", "/"), page_url))
         if not result:
-            for match in re.finditer(r"""https?://[^\s"'<>]+?(?:\.m3u8|\.mp4|master\.txt)[^\s"'<>]*""", page or "", re.I):
+            for match in re.finditer(r"""https?://[^\s"'<>]+?(?:\.m3u8|\.mp4|master\.txt|/embed/sheila/)[^\s"'<>]*""", page or "", re.I):
                 result.append(match.group(0).replace("\\/", "/"))
         return list(dict.fromkeys(result))
 
@@ -226,6 +273,8 @@ class DiziBoxExtractor(object):
         subtitles = []
         for block in re.findall(r"""["']?tracks["']?\s*:\s*(\[.*?\])""", page or "", re.S | re.I):
             for item in self._parse_js_list(block):
+                if not isinstance(item, dict):
+                    continue
                 file_url = item.get("file")
                 kind = item.get("kind", "")
                 if file_url and ("caption" in kind.lower() or "subtitle" in kind.lower()):
@@ -258,8 +307,98 @@ class DiziBoxExtractor(object):
         return re.sub(r"\b\w+\b", lambda m: self._packed_symbol(m.group(0), base, symbols), payload)
 
     def media_url(self, text):
-        match = re.search(r"""https?://[^\s"'<>]+?\.(?:m3u8|mp4|master\.txt)(?:\?[^\s"'<>]*)?""", text or "", re.I)
+        match = re.search(r"""https?://[^\s"'<>]+?(?:\.(?:m3u8|mp4)|master\.txt|/embed/sheila/[^"'\s<>]+)(?:\?[^\s"'<>]*)?""", text or "", re.I)
         return match.group(0).replace("\\/", "/") if match else ""
+
+    def resolve_hls_variant(self, url, referer=None):
+        try:
+            playlist = self.fetch(url, referer)
+        except (manituxhttp.HTTPError, manituxhttp.RequestError):
+            return ""
+        if "#EXTM3U" not in playlist or "#EXT-X-STREAM-INF" not in playlist:
+            return ""
+        variants = []
+        pending_bandwidth = 0
+        for line in playlist.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("#EXT-X-STREAM-INF"):
+                match = re.search(r"BANDWIDTH=(\d+)", line, re.I)
+                pending_bandwidth = int(match.group(1)) if match else 0
+                continue
+            if line.startswith("#"):
+                continue
+            variants.append((pending_bandwidth, parsers.fix_url(line, url)))
+            pending_bandwidth = 0
+        if not variants:
+            return ""
+        variants.sort(key=lambda item: item[0], reverse=True)
+        return variants[0][1]
+
+    def decode_embedded_html(self, page):
+        chunks = []
+        decrypted = self.decrypt_cryptojs_page(page)
+        if decrypted:
+            chunks.append(decrypted)
+        for escaped in re.findall(r'unescape\(["\'](.*?)["\']\)', page or "", re.S | re.I):
+            chunks.append(unquote(escaped))
+        for encoded in re.findall(r'atob\(["\']([A-Za-z0-9+/=_-]+)["\']\)', page or "", re.I):
+            chunks.append(self._b64(encoded))
+        for encoded in re.findall(r'["\']([A-Za-z0-9+/=_-]{40,})["\']', page or ""):
+            decoded = self._b64(encoded)
+            if "<iframe" in decoded or ".m3u8" in decoded or ".mp4" in decoded:
+                chunks.append(decoded)
+        return "\n".join(x for x in chunks if x)
+
+    def decrypt_cryptojs_page(self, page):
+        if AES is None:
+            return ""
+        match = re.search(
+            r"""CryptoJS\.AES\.decrypt\(["'](?P<data>[^"']+)["']\s*,\s*["'](?P<pass>[^"']+)["']\)""",
+            page or "",
+            re.S | re.I,
+        )
+        if not match:
+            return ""
+        try:
+            raw = base64.b64decode(match.group("data"))
+            password = match.group("pass").encode("utf-8")
+            if raw.startswith(b"Salted__"):
+                salt = raw[8:16]
+                encrypted = raw[16:]
+                key_iv = self.evp_bytes_to_key(password, salt, 48)
+                key = key_iv[:32]
+                iv = key_iv[32:48]
+            else:
+                encrypted = raw
+                key_iv = self.evp_bytes_to_key(password, b"", 48)
+                key = key_iv[:32]
+                iv = key_iv[32:48]
+            decrypted = AES.new(key, AES.MODE_CBC, iv).decrypt(encrypted)
+            pad = decrypted[-1]
+            if 0 < pad <= 16:
+                decrypted = decrypted[:-pad]
+            return decrypted.decode("utf-8", "replace")
+        except Exception:
+            return ""
+
+    @staticmethod
+    def evp_bytes_to_key(password, salt, key_len):
+        data = b""
+        prev = b""
+        while len(data) < key_len:
+            prev = hashlib.md5(prev + password + salt).digest()
+            data += prev
+        return data[:key_len]
+
+    def is_site_player(self, url):
+        parsed = urlparse(url or "")
+        return parsed.netloc.lower() == urlparse(self.base_url).netloc.lower() and "/player/" in parsed.path
+
+    @staticmethod
+    def is_media_url(url):
+        return bool(re.search(r"""(?:\.m3u8|\.mp4|master\.txt|/embed/sheila/[^?#]*)(?:[?#].*)?$""", url or "", re.I))
 
     @staticmethod
     def has_playable(page):

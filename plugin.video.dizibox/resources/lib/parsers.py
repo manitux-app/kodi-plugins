@@ -137,8 +137,13 @@ def parse_detail(page, url, base_url):
     if soup is not None:
         h1 = soup.select_one("div.tv-overview h1 a") or soup.find("h1")
         title = _clean(h1.get_text(" ")) if h1 else ""
-        image = soup.select_one("div.tv-overview figure img") or soup.find("img", attrs={"src": True})
-        poster = fix_url((image.get("data-src") or image.get("src")) if image else "", base_url)
+        image = (
+            soup.select_one("div.tv-overview figure img")
+            or soup.select_one("img[itemprop='image']")
+            or soup.select_one("meta[property='og:image']")
+            or soup.find("img", attrs={"src": True})
+        )
+        poster = _image_url_from_node(image, base_url)
         desc = soup.select_one("div.tv-story p") or soup.find(attrs={"itemprop": "description"}) or soup.find("p")
         plot = _clean(desc.get_text(" ")) if desc else ""
         year_node = soup.select_one("a[href*='/yil/']")
@@ -150,7 +155,7 @@ def parse_detail(page, url, base_url):
     if not title:
         title = _clean(_first(r"<h1[^>]*>(.*?)</h1>", page, re.S))
     if not poster:
-        poster = fix_url(_attr(_first(r"<img\b[^>]*>", page, re.S), "src"), base_url)
+        poster = _poster_from_html(page, base_url)
     if not plot:
         plot = _clean(_first(r"<p[^>]*itemprop=['\"]description['\"][^>]*>(.*?)</p>", page, re.S))
     if not year:
@@ -174,16 +179,27 @@ def parse_detail(page, url, base_url):
 
 def parse_season_links(page, base_url):
     soup = _soup(page)
-    if soup is None:
-        return []
     links = []
     seen = set()
-    for node in soup.select("div#seasons-list a[href]"):
-        url = fix_url(node.get("href"), base_url)
+    if soup is not None:
+        nodes = soup.select("div#seasons-list a[href]")
+        for node in nodes:
+            url = fix_url(node.get("href"), base_url)
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            title = _clean(node.get_text(" ")) or "Sezon"
+            links.append({"title": title, "url": url})
+        if links:
+            return links
+
+    block = _first(r"<div\b[^>]*id=['\"]seasons-list['\"][^>]*>(.*?)</div>", page, re.S)
+    for link in re.findall(r"<a\b[^>]*href=['\"][^'\"]+['\"][^>]*>.*?</a>", block or "", re.S | re.I):
+        url = fix_url(_attr(link, "href"), base_url)
         if not url or url in seen:
             continue
         seen.add(url)
-        title = _clean(node.get_text(" ")) or "Sezon"
+        title = _clean(link) or "Sezon"
         links.append({"title": title, "url": url})
     return links
 
@@ -194,16 +210,18 @@ def parse_episodes(page, base_url):
         episodes = []
         seen = set()
         for article in soup.select("article.grid-box"):
-            link = article.select_one("div.post-title a[href]") or article.find("a", href=True)
+            link = _episode_link_from_node(article)
             if link is None:
                 continue
-            title = _clean(link.get_text(" ") or link.get("title") or "")
+            title = _episode_title_from_node(link)
             url = fix_url(link.get("href"), base_url)
-            if not title or not url or url in seen:
+            if not _is_episode_link(title, url) or url in seen:
                 continue
             seen.add(url)
             img = article.find("img")
             image = fix_url((img.get("data-src") or img.get("src")) if img else "", base_url)
+            if _is_generic_title(title):
+                title = _title_from_episode_url(url) or title
             season, episode = parse_episode_numbers(title + " " + url)
             episodes.append({
                 "title": title,
@@ -218,13 +236,22 @@ def parse_episodes(page, base_url):
     episodes = []
     seen = set()
     for block in re.findall(r"<article\b[^>]*class=['\"][^'\"]*\bgrid-box\b[^'\"]*['\"][^>]*>.*?</article>", page or "", re.S | re.I):
-        link = _first(r"<a\b[^>]*href=['\"][^'\"]+['\"][^>]*>.*?</a>", block, re.S)
+        links = re.findall(r"<a\b[^>]*href=['\"][^'\"]+['\"][^>]*>.*?</a>", block, re.S | re.I)
+        link = ""
+        for candidate in links:
+            candidate_url = fix_url(_attr(candidate, "href"), base_url)
+            candidate_title = _clean(candidate) or _attr(candidate, "title")
+            if _is_episode_link(candidate_title, candidate_url):
+                link = candidate
+                break
         href = _attr(link, "href")
-        title = _clean(link)
+        title = _clean(link) or _attr(link, "title")
         url = fix_url(href, base_url)
-        if not title or not url or url in seen:
+        if not _is_episode_link(title, url) or url in seen:
             continue
         seen.add(url)
+        if _is_generic_title(title):
+            title = _title_from_episode_url(url) or title
         season, episode = parse_episode_numbers(title + " " + url)
         episodes.append({"title": title, "url": url, "image": "", "season": season, "episode": episode})
     return episodes
@@ -244,6 +271,48 @@ def parse_episode_numbers(value):
     return 0, 0
 
 
+def _episode_link_from_node(node):
+    preferred = node.select_one("div.post-title a[href], h2 a[href], h3 a[href]")
+    if preferred is not None and _is_episode_link(_episode_title_from_node(preferred), preferred.get("href")):
+        return preferred
+    for link in node.find_all("a", href=True):
+        if _is_episode_link(_episode_title_from_node(link), link.get("href")):
+            return link
+    return None
+
+
+def _episode_title_from_node(node):
+    if node is None:
+        return ""
+    title = _clean(node.get_text(" ") or node.get("title") or "")
+    if not title:
+        image = node.find("img")
+        title = _clean((image.get("alt") if image else "") or node.get("title") or "")
+    return title
+
+
+def _is_episode_link(title, url):
+    value = (title or "") + " " + (url or "")
+    if re.search(r"(?:player|fragman|trailer|youtube|ok\.ru|vidmoly|javascript:|#)", value, re.I):
+        return False
+    return bool(re.search(r"(?:\d+\.?\s*sezon|\d+-sezon|\d+x\d+).*?(?:\d+\.?\s*b[oö]l[uü]m|\d+-bolum)|bolum-izle", value, re.I))
+
+
+def _is_generic_title(title):
+    return _clean(title).lower() in ("dizibox", "dizi box", "izle", "watch", "")
+
+
+def _title_from_episode_url(url):
+    path = urlparse(url or "").path.strip("/")
+    slug = path.split("/")[-1]
+    if not slug:
+        return ""
+    text = re.sub(r"-izle$", "", slug, flags=re.I)
+    text = text.replace("-", " ")
+    text = re.sub(r"\b(\d+)\s+sezon\s+(\d+)\s+bolum\b", r"\1. Sezon \2. Bölüm", text, flags=re.I)
+    return _clean(text.title())
+
+
 def parse_video_sources(page, page_url, base_url):
     soup = _soup(page)
     sources = []
@@ -253,53 +322,270 @@ def parse_video_sources(page, page_url, base_url):
         fixed = fix_url(url, base_url)
         if not fixed or fixed in seen:
             return
-        trailer = bool(is_trailer) or _is_youtube_url(fixed)
+        label = _clean(label)
+        trailer = bool(is_trailer) or _is_youtube_url(fixed) or _looks_like_trailer(label, fixed)
+        if trailer and (not label or label.lower() == "dizibox"):
+            label = "Fragman"
+        elif not trailer and label.lower() == "dizibox":
+            inferred = _source_label(fixed)
+            if inferred != "DiziBox":
+                label = inferred
         seen.add(fixed)
         sources.append({
-            "label": label or "DiziBox",
+            "label": _display_source_label(label or _source_label(fixed), fixed),
             "url": fixed,
             "referer": referer or page_url,
             "is_trailer": trailer,
         })
 
     if soup is not None:
-        for node in soup.select("a[href*='youtube'], a[href*='youtu.be'], a[href*='fragman'], a[data-video_url]"):
-            href = node.get("data-video_url") or node.get("href")
-            add(_clean(node.get_text(" ")) or "Fragman", href, page_url, True)
+        for node in soup.select("div#trailer-box iframe[src], div#trailer-box iframe[data-src], a[href*='youtube'], a[href*='youtu.be'], a[href*='fragman'], iframe[src*='youtube'], iframe[data-src*='youtube'], a[data-video_url]"):
+            href = _source_url_from_node(node, base_url)
+            label = _clean(node.get_text(" ") or node.get("title") or node.get("data-title") or "")
+            if _looks_like_trailer(label, href):
+                add(label or _source_label(href), href, page_url, True)
 
-        iframe = soup.select_one("div#video-area iframe[src]") or soup.select_one("iframe[src*='/player/']")
-        if iframe is not None:
-            selected = soup.select_one("div.video-toolbar option[selected]")
-            label = _clean(selected.get_text(" ")) if selected else "DiziBox"
-            add(label, iframe.get("src"), page_url)
+        toolbar_options = [
+            option for option in soup.select("div.video-toolbar option[value], div.video-toolbar option[href]")
+            if _clean(option.get("value") or option.get("href"))
+        ]
 
-        for option in soup.select("div.video-toolbar option[value]"):
-            label = _clean(option.get_text(" ")) or "Alternatif"
-            add(label, option.get("value"), page_url)
+        for option in toolbar_options:
+            url = _source_url_from_node(option, base_url)
+            label = _clean(option.get_text(" ") or option.get("label") or option.get("data-title") or "") or _source_label(url)
+            add(label, url, page_url)
 
-    if not sources:
-        for iframe in re.findall(r"<iframe\b[^>]+src=['\"]([^'\"]+)['\"]", page or "", re.S | re.I):
-            add("DiziBox", iframe, page_url)
+        if not toolbar_options:
+            iframe = (
+                soup.select_one("div#video-area iframe[src], div#video-area iframe[data-src]")
+                or soup.select_one("iframe[src*='/player/'], iframe[data-src*='/player/']")
+            )
+            if iframe is not None:
+                selected = soup.select_one("div.video-toolbar option[selected]")
+                label = _clean(selected.get_text(" ")) if selected else _source_label(iframe.get("data-src") or iframe.get("src"))
+                add(label, iframe.get("data-src") or iframe.get("src"), page_url)
+
+    if not any(not source.get("is_trailer") for source in sources):
+        for tag in re.findall(r"<option\b[^>]*(?:value|href)=['\"][^'\"]+['\"][^>]*>.*?</option>", page or "", re.S | re.I):
+            url = _source_url_from_tag(tag, base_url)
+            if not _looks_like_video_url(url) and not _is_same_site_url(url, base_url):
+                continue
+            add(_clean(tag) or _source_label(url), url, page_url)
+
+    if not any(not source.get("is_trailer") for source in sources):
+        for iframe in re.findall(r"<iframe\b[^>]+(?:data-src|src)=['\"]([^'\"]+)['\"]", page or "", re.S | re.I):
+            if _is_youtube_url(iframe):
+                continue
+            add(_source_label(iframe), iframe, page_url)
+    if not any(source.get("is_trailer") for source in sources):
+        trailer_block = _first(r"<div\b[^>]*id=['\"]trailer-box['\"][^>]*>(.*?)</div>", page, re.S)
+        for iframe in re.findall(r"<iframe\b[^>]+(?:data-src|src)=['\"]([^'\"]+)['\"]", trailer_block or "", re.S | re.I):
+            add("Fragman", iframe, page_url, True)
     return sources
 
 
 def parse_iframe(page, base_url):
     soup = _soup(page)
     if soup is not None:
-        iframe = soup.select_one("div#video-area iframe[src]") or soup.select_one("div#Player iframe[src]") or soup.find("iframe", src=True)
+        iframe = (
+            soup.select_one("div#video-area iframe[src], div#video-area iframe[data-src]")
+            or soup.select_one("div#Player iframe[src], div#Player iframe[data-src]")
+            or soup.find("iframe", src=True)
+            or soup.find("iframe", attrs={"data-src": True})
+        )
         if iframe is not None:
-            return fix_url(iframe.get("src"), base_url)
-    return fix_url(_first(r"<iframe\b[^>]+src=['\"]([^'\"]+)['\"]", page, re.S), base_url)
+            return fix_url(iframe.get("data-src") or iframe.get("src"), base_url)
+    return fix_url(_first(r"<iframe\b[^>]+(?:data-src|src)=['\"]([^'\"]+)['\"]", page, re.S), base_url)
 
 
 def _is_youtube_url(url):
     return bool(re.search(r"(?:youtube\.com|youtu\.be)", url or "", re.I))
 
 
+def _looks_like_trailer(label, url):
+    text = (label or "") + " " + (url or "")
+    return bool(re.search(r"(?:fragman|trailer|youtube\.com|youtu\.be)", text, re.I))
+
+
+def _looks_like_video_url(url):
+    return bool(re.search(r"(?:/player/|ok\.ru|odnoklassniki|vidmoly|videobin|molystream|sheila\.stream|popcornvakti|rufiiguta|youtube\.com|youtu\.be|\.m3u8|\.mp4)", url or "", re.I))
+
+
+def _is_same_site_url(url, base_url):
+    if not url:
+        return False
+    return urlparse(fix_url(url, base_url)).netloc.lower() == urlparse(base_url).netloc.lower()
+
+
+def _source_label(url):
+    text = (url or "").lower()
+    if _is_youtube_url(text) or "fragman" in text:
+        return "Fragman"
+    labels = (
+        ("dbxpro", "DBXPro"),
+        ("/player/debx", "DBXPro"),
+        ("debx", "DBXPro"),
+        ("ok.ru", "Odnok"),
+        ("odnoklassniki", "Odnok"),
+        ("odnok", "Odnok"),
+        ("vidmoly", "VidMoly"),
+        ("videobin", "VidMoly"),
+        ("moly", "Moly+"),
+        ("king", "King"),
+        ("haydi", "Haydi"),
+    )
+    for needle, label in labels:
+        if needle in text:
+            return label
+    return "DiziBox"
+
+
+def _display_source_label(label, url):
+    raw = _clean(label)
+    lowered = raw.lower()
+    aliases = {
+        "dbx": "DBXPro",
+        "dbxpro": "DBXPro",
+        "dbx pro": "DBXPro",
+        "debx": "DBXPro",
+        "moly": "Moly+",
+        "moly+": "Moly+",
+        "molystream": "Moly+",
+        "odnok": "Odnok",
+        "odnoklassniki": "Odnok",
+        "ok": "Odnok",
+        "ok.ru": "Odnok",
+    }
+    if lowered in aliases:
+        return aliases[lowered]
+    if lowered in ("", "dizibox", "dizi box", "alternatif"):
+        return _source_label(url)
+    return raw
+
+
+def _source_url_from_node(node, base_url):
+    if node is None:
+        return ""
+    attrs = (
+        "data-video_url",
+        "data-video-url",
+        "data-src",
+        "data-iframe",
+        "data-url",
+        "data-href",
+        "href",
+        "src",
+        "value",
+    )
+    for name in attrs:
+        value = node.get(name)
+        if value and value != "#":
+            if _looks_like_video_url(value) or value.startswith(("http://", "https://", "/", "//")):
+                return value
+    token = (
+        node.get("data-video")
+        or node.get("data-hash")
+        or node.get("data-id")
+        or node.get("value")
+        or ""
+    )
+    player = _clean(
+        node.get("data-type")
+        or node.get("data-player")
+        or node.get("data-title")
+        or node.get("label")
+        or node.get_text(" ")
+        or ""
+    ).lower()
+    return _build_player_url(token, player, base_url)
+
+
+def _source_url_from_tag(tag, base_url):
+    for name in ("data-video_url", "data-video-url", "data-src", "data-iframe", "data-url", "data-href", "href", "src", "value"):
+        value = _attr(tag, name)
+        if value and value != "#":
+            if _looks_like_video_url(value) or value.startswith(("http://", "https://", "/", "//")):
+                return value
+    token = _attr(tag, "data-video") or _attr(tag, "data-hash") or _attr(tag, "data-id") or _attr(tag, "value")
+    player = _clean(_attr(tag, "data-type") or _attr(tag, "data-player") or _attr(tag, "data-title") or _attr(tag, "label") or tag).lower()
+    return _build_player_url(token, player, base_url)
+
+
+def _build_player_url(token, player, base_url):
+    token = html.unescape((token or "").strip())
+    if not token or token == "#":
+        return ""
+    if _looks_like_video_url(token) or token.startswith(("http://", "https://", "/", "//")):
+        return token
+    if "ok" in player or "odnoklassniki" in player:
+        return "https://ok.ru/videoembed/" + token if token.isdigit() else ""
+    if "vidmoly" in player or "videobin" in player:
+        if token.startswith(("http://", "https://", "//")):
+            return token
+        if re.match(r"^[a-z0-9_-]+$", token, re.I):
+            return "https://vidmoly.to/embed-" + token + ".html"
+        return ""
+    if "dbx" in player or "debx" in player:
+        return base_url.rstrip("/") + "/player/debx.php?v=" + token
+    if "moly" in player:
+        return base_url.rstrip("/") + "/player/moly/moly.php?h=" + token
+    if "haydi" in player:
+        return base_url.rstrip("/") + "/player/haydi.php?v=" + token
+    if "king" in player:
+        return base_url.rstrip("/") + "/player/king/king.php?v=" + token
+    return ""
+
+
 def fix_url(url, base_url):
     if not url:
         return ""
     return urljoin(base_url.rstrip("/") + "/", html.unescape(url).strip())
+
+
+def _image_url_from_node(node, base_url):
+    if node is None:
+        return ""
+    if getattr(node, "name", "") == "meta":
+        value = node.get("content") or ""
+    else:
+        value = (
+            node.get("data-src")
+            or node.get("data-lazy-src")
+            or node.get("data-original")
+            or node.get("data-srcset")
+            or node.get("srcset")
+            or node.get("src")
+            or ""
+        )
+    value = (value or "").split(",")[0].strip().split(" ")[0]
+    if not value or value.lower().startswith("data:image"):
+        return ""
+    return fix_url(value, base_url)
+
+
+def _poster_from_html(page, base_url):
+    patterns = (
+        r"<meta\b[^>]*(?:property|name)=['\"]og:image['\"][^>]*>",
+        r"<img\b[^>]*class=['\"][^'\"]*(?:poster|thumb|image|cover)[^'\"]*['\"][^>]*>",
+        r"<img\b[^>]*>",
+    )
+    for pattern in patterns:
+        tag = _first(pattern, page, re.S)
+        if not tag:
+            continue
+        value = (
+            _attr(tag, "content")
+            or _attr(tag, "data-src")
+            or _attr(tag, "data-lazy-src")
+            or _attr(tag, "data-original")
+            or _attr(tag, "data-srcset")
+            or _attr(tag, "srcset")
+            or _attr(tag, "src")
+        )
+        value = (value or "").split(",")[0].strip().split(" ")[0]
+        if value and not value.lower().startswith("data:image"):
+            return fix_url(value, base_url)
+    return ""
 
 
 def _parse_genres_with_soup(page, base_url, archive_url):

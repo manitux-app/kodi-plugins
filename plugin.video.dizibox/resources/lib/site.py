@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import time
+import re
 
 import manituxhttp
 try:
@@ -40,11 +41,6 @@ class DiziBoxSite(object):
         return res.text
 
     def categories(self):
-        archive_url = self.base_url + self.ARCHIVE_PATH
-        page = self.get(archive_url, referer=self.base_url + "/")
-        categories = parsers.parse_genres(page, self.base_url, archive_url)
-        if categories:
-            return categories
         return parsers.fallback_genres(self.base_url)
 
     def get_page_items(self, category_url, page_number=1):
@@ -55,11 +51,9 @@ class DiziBoxSite(object):
     def detail(self, url):
         page = self.get(url)
         info = parsers.parse_detail(page, url, self.base_url)
-        episodes = list(info.get("episodes") or [])
-        season_links = info.get("season_links") or []
-        if season_links and not episodes:
-            episodes = self.load_episodes(season_links, referer=url)
-        info["episodes"] = self.sort_episodes(episodes)
+        info["episodes"] = self.sort_episodes(info.get("episodes") or [])
+        if not self.is_episode_url(url):
+            info["sources"] = [source for source in info.get("sources", []) if source.get("is_trailer")]
         return info
 
     def parse_detail(self, page, url):
@@ -108,6 +102,10 @@ class DiziBoxSite(object):
         host = urlparse(url or "").netloc.lower()
         base_host = urlparse(self.base_url).netloc.lower()
         return host == base_host and "/player/" not in (url or "")
+
+    @staticmethod
+    def is_episode_url(url):
+        return bool(re.search(r"(?:\d+-sezon-\d+-bolum|\d+x\d+|bolum(?:-|$))", url or "", re.I))
 
     @staticmethod
     def sort_episodes(episodes):

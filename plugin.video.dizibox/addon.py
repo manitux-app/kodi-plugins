@@ -9,10 +9,10 @@ import xbmcgui
 import xbmcplugin
 
 try:
-    from urllib.parse import parse_qsl, urlencode
+    from urllib.parse import parse_qsl, quote, urlencode
 except ImportError:
     from urlparse import parse_qsl
-    from urllib import urlencode
+    from urllib import quote, urlencode
 
 from resources.lib.site import DiziBoxSite
 
@@ -33,9 +33,22 @@ def build_url(query):
     return sys.argv[0] + "?" + urlencode(query)
 
 
+def art_url(url, referer=None):
+    if not url or "|" in url or not url.startswith(("http://", "https://")):
+        return url
+    bits = ["User-Agent=" + quote(UA)]
+    bits.append("Referer=" + quote(referer or BASE_URL + "/"))
+    return url + "|" + "&".join(bits)
+
+
+def set_art(li, image, referer=None):
+    image = art_url(image, referer)
+    li.setArt({"thumb": image, "icon": image, "poster": image, "fanart": image})
+
+
 def add_directory(title, action, url="", image="", plot=""):
     li = xbmcgui.ListItem(label=title)
-    li.setArt({"thumb": image, "icon": image, "poster": image, "fanart": image})
+    set_art(li, image, url or BASE_URL + "/")
     li.setInfo("video", {"title": title, "plot": plot})
     xbmcplugin.addDirectoryItem(HANDLE, build_url({"action": action, "url": url}), li, True)
 
@@ -45,7 +58,7 @@ def add_video(title, action, url, image="", plot="", extra=None):
     if extra:
         query.update(extra)
     li = xbmcgui.ListItem(label=title)
-    li.setArt({"thumb": image, "icon": image, "poster": image, "fanart": image})
+    set_art(li, image, extra.get("referer") if extra else BASE_URL + "/")
     li.setInfo("video", {"title": title, "plot": plot})
     li.setProperty("IsPlayable", "true")
     xbmcplugin.addDirectoryItem(HANDLE, build_url(query), li, False)
@@ -74,8 +87,9 @@ def list_page(url, page_number=1):
 def detail(url):
     info = site.detail(url)
     sources = info.get("sources", [])
+    episodes = info.get("episodes", [])
     playable_sources = [source for source in sources if not source.get("is_trailer")]
-    for source in sources:
+    for source in sources if not episodes else [source for source in sources if source.get("is_trailer")]:
         add_video(
             source["label"],
             "play_youtube" if source.get("is_trailer") else "play_source",
@@ -85,11 +99,16 @@ def detail(url):
             {"referer": source.get("referer") or url, "label": source["label"]},
         )
     if not playable_sources:
-        for episode in info.get("episodes", []):
-            title = episode.get("title") or info.get("title") or "Bölüm"
-            image = episode.get("image") or info.get("image", "")
-            add_directory(title, "detail", episode["url"], image, info.get("plot", ""))
-    if not sources and not info.get("episodes"):
+        if episodes:
+            for episode in episodes:
+                title = episode.get("title") or info.get("title") or "Bölüm"
+                image = episode.get("image") or info.get("image", "")
+                add_directory(title, "detail", episode["url"], image, info.get("plot", ""))
+        else:
+            for season in info.get("season_links", []):
+                title = season.get("title") or "Sezon"
+                add_directory(title, "detail", season["url"], info.get("image", ""), info.get("plot", ""))
+    if not sources and not info.get("episodes") and not info.get("season_links"):
         xbmcgui.Dialog().notification("DiziBOX", "Kaynak veya bölüm bulunamadı", xbmcgui.NOTIFICATION_WARNING, 3000)
     xbmcplugin.setContent(HANDLE, "tvshows")
 
@@ -124,12 +143,41 @@ def play_youtube(url):
 def play_source(url, referer=None, label=""):
     stream, subtitles = site.resolve_source(url, referer, label)
     if not stream:
+        xbmcgui.Dialog().notification("DiziBOX", "Kaynak çözülemedi", xbmcgui.NOTIFICATION_WARNING, 3000)
         xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
         return
     li = xbmcgui.ListItem(path=stream)
+    if is_hls_stream(stream):
+        li.setMimeType("application/vnd.apple.mpegurl")
+        li.setContentLookup(False)
+        if has_addon("inputstream.adaptive"):
+            li.setProperty("inputstream", "inputstream.adaptive")
+            li.setProperty("inputstreamaddon", "inputstream.adaptive")
+            li.setProperty("inputstream.adaptive.manifest_type", "hls")
+            li.setProperty("inputstream.adaptive.stream_headers", stream_headers(stream))
+            li.setProperty("inputstream.adaptive.manifest_headers", stream_headers(stream))
     if subtitles:
         li.setSubtitles(subtitles)
     xbmcplugin.setResolvedUrl(HANDLE, True, li)
+
+
+def is_hls_stream(url):
+    clean = (url or "").split("|", 1)[0]
+    return bool(re.search(r"(?:\.m3u8|master\.txt|/embed/sheila/|/q/\d+)(?:[?#].*)?$", clean, re.I))
+
+
+def stream_headers(url):
+    if "|" not in (url or ""):
+        return ""
+    return url.split("|", 1)[1]
+
+
+def has_addon(addon_id):
+    try:
+        xbmcaddon.Addon(id=addon_id)
+        return True
+    except Exception:
+        return False
 
 
 def run():
