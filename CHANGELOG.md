@@ -10,6 +10,7 @@ Bu dosya, Codex ile yapilan onemli proje degisikliklerini kisa notlarla takip et
 - Paketleme scriptleri zip'in yanina ilgili eklentinin `icon.png` dosyasini da kopyalayacak sekilde guncellendi.
 - PowerShell paketleme scriptinde zip icindeki yollar Kodi uyumlulugu icin `/` ayiraci kullanacak sekilde duzeltildi.
 - Kodi'nin bozuk `1.0.1` paket cache'ini asmak icin `plugin.video.dizibox` surumu `1.0.2` olarak paketlendi.
+- `plugin.video.hdfilmcehennemi` Android `.so` izin sorunlari nedeniyle `script.module.tlsclient` yerine `script.module.manituxhttp` kullanacak sekilde baslatildi.
 - Proje hafizasi icin `AGENTS.md` eklendi.
 - Codex oturumlari arasinda yapilan isleri izlemek icin `CHANGELOG.md` eklendi.
 - `plugin.video.dizibox` icinde fragman kaynaklarinin `DiziBox` yerine `Fragman` gorunmesi saglandi.

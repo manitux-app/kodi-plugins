@@ -7,7 +7,7 @@ import json
 import re
 import string
 
-import tlsclient
+import manituxhttp
 
 try:
     from urllib.parse import quote, urlparse, urlunparse
@@ -17,11 +17,9 @@ except ImportError:
 
 
 class VideoExtractor(object):
-    CLIENT_IDENTIFIERS = ("chrome_144", "cloudscraper")
-
     def __init__(self, user_agent):
         self.user_agent = user_agent
-        self.session = tlsclient.Session(client_identifier=self.CLIENT_IDENTIFIERS[0])
+        self.session = manituxhttp.Session()
 
     def headers(self, referer=None):
         headers = {
@@ -111,28 +109,14 @@ class VideoExtractor(object):
         return source.replace(r"\u0026", "&") + self.kodi_headers("https://ok.ru/"), []
 
     def fetch(self, url, referer=None):
-        last_error = None
-        for identifier in self.CLIENT_IDENTIFIERS:
-            if self.session.client_identifier != identifier:
-                self.session = tlsclient.Session(client_identifier=identifier)
-            try:
-                res = self.session.get(
-                    url,
-                    headers=self.headers(referer),
-                    timeout=25,
-                    allow_redirects=True,
-                    tls_client_identifier=identifier,
-                )
-                if res.status_code in (403, 429) and identifier != self.CLIENT_IDENTIFIERS[-1]:
-                    last_error = tlsclient.HTTPError(res)
-                    continue
-                res.raise_for_status()
-                return res.text
-            except (tlsclient.HTTPError, tlsclient.RequestError) as exc:
-                last_error = exc
-                if identifier == self.CLIENT_IDENTIFIERS[-1]:
-                    raise
-        raise last_error
+        res = self.session.get(
+            url,
+            headers=self.headers(referer),
+            timeout=25,
+            allow_redirects=True,
+        )
+        res.raise_for_status()
+        return res.text
 
     def normalize_url(self, url):
         if url.startswith("//"):
