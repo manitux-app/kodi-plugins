@@ -12,6 +12,7 @@ Bu dosya, Codex ile yapilan onemli proje degisikliklerini kisa notlarla takip et
 - Kodi'de `requests_toolbelt` bulunmadiginda `cloudscraper` importunun kapanmamasi icin `script.module.manituxhttp` icinde debug dump fallback'i eklendi.
 - `plugin.video.hdfilmcehennemi` detay sayfalarinda media info'nun bos gelmesine neden olan `Accept-Encoding: br` header'i kaldirildi; canli detay HTML'iyle baslik, poster, aciklama ve kaynak parse'i dogrulandi.
 - `script.module.manituxhttp` `1.0.4` ve `plugin.video.hdfilmcehennemi` `1.0.10` olarak paketlendi.
+- Kısa url kod oluşturuldu: https://go.aftvnews.com/5156346+
 
 ## 2026-05-26
 
