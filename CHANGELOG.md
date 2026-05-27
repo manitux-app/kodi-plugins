@@ -8,6 +8,9 @@ Bu dosya, Codex ile yapilan onemli proje degisikliklerini kisa notlarla takip et
 - `plugin.video.filmekseni`, `plugin.video.filmmakinesi` ve `plugin.video.filmmodu` `script.module.tlsclient` yerine `script.module.manituxhttp` kullanacak sekilde guncellendi.
 - `script.module.manituxhttp` surumu `1.0.1`; video eklentileri `plugin.video.dizibox` `1.0.3`, `plugin.video.filmekseni` `1.0.4`, `plugin.video.filmmakinesi` `1.0.5`, `plugin.video.filmmodu` `1.0.2`, `plugin.video.hdfilmcehennemi` `1.0.9` olarak paketlendi.
 - `script.module.manituxhttp` icindeki takipli `cloudscraper` pycache dosyalari temizlendi ve modul surumu `1.0.2` olarak paketlendi.
+- `plugin.video.hdfilmcehennemi` listeleme API'sinde Kodi uzerinde gorulen `/load/page/1/home/` 403 hatasi icin AJAX header fallback denemeleri eklendi.
+- Kodi'de `requests_toolbelt` bulunmadiginda `cloudscraper` importunun kapanmamasi icin `script.module.manituxhttp` icinde debug dump fallback'i eklendi.
+- `plugin.video.hdfilmcehennemi` detay sayfalarinda media info'nun bos gelmesine neden olan `Accept-Encoding: br` header'i kaldirildi; canli detay HTML'iyle baslik, poster, aciklama ve kaynak parse'i dogrulandi.
 
 ## 2026-05-26
 

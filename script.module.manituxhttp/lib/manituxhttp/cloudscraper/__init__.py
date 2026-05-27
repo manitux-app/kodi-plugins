@@ -9,7 +9,15 @@ from typing import Optional, Dict, Any, Union, List
 
 from requests.adapters import HTTPAdapter
 from requests.sessions import Session
-from requests_toolbelt.utils import dump
+try:
+    from requests_toolbelt.utils import dump
+except ImportError:
+    class _DumpFallback(object):
+        @staticmethod
+        def dump_all(req):
+            return b""
+
+    dump = _DumpFallback()
 
 # ------------------------------------------------------------------------------- #
 

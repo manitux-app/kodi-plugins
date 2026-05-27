@@ -151,7 +151,7 @@
         <license>MIT</license>
     </extension>
 </addon>
-<addon id="script.module.manituxhttp" name="Manitux HTTP" version="1.0.2" provider-name="manitux">
+<addon id="script.module.manituxhttp" name="Manitux HTTP" version="1.0.3" provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.requests" optional="true"/>

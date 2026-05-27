@@ -26,7 +26,6 @@ class HDFilmCehennemiSite(object):
             "User-Agent": self.user_agent,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
         }
@@ -53,7 +52,6 @@ class HDFilmCehennemiSite(object):
             "User-Agent": self.user_agent,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
             "Upgrade-Insecure-Requests": "1",
             "Connection": "keep-alive"
         }
@@ -82,8 +80,15 @@ class HDFilmCehennemiSite(object):
 
     def get_page_items(self, category_url, page_number=1, title=""):
         api_url = self.page_url(category_url, page_number)
-        page = self.get_ajax(api_url)
-        print(page)
+        try:
+            page = self.get_ajax(api_url)
+        except manituxhttp.HTTPError as exc:
+            if getattr(exc.response, "status_code", None) != 403:
+                raise
+            fallback_url = self.page_fallback_url(api_url, category_url, page_number)
+            if not fallback_url:
+                raise
+            page = self.get(fallback_url)
         html_block = parsers.html_from_load_response(page)
         return parsers.parse_page_items(html_block, self.base_url, title)
 
@@ -115,13 +120,48 @@ class HDFilmCehennemiSite(object):
 
     def get_ajax(self, url, referer=None):
         url = self.absolute(url)
-        try:
-            return self._get(url, headers=self.headers(referer, ajax=True)).text
-        except manituxhttp.HTTPError as exc:
-            if getattr(exc.response, "status_code", None) != 403:
-                raise
-            self._prime_session()
-            return self._get(url, headers=self.headers(self.base_url + "/", ajax=True)).text
+        last_error = None
+        for headers in self.ajax_header_variants(referer):
+            try:
+                return self._get(url, headers=headers).text
+            except manituxhttp.HTTPError as exc:
+                if getattr(exc.response, "status_code", None) != 403:
+                    raise
+                last_error = exc
+                self._prime_session()
+        raise last_error
+
+    def page_fallback_url(self, api_url, category_url, page_number):
+        if int(page_number) != 1:
+            return ""
+        path = urlparse.urlparse(api_url).path.rstrip("/")
+        if path == "/load/page/1/home":
+            return self.base_url + "/"
+        if "/tur/" in category_url:
+            return self.absolute(category_url)
+        return ""
+
+    def ajax_header_variants(self, referer=None):
+        base_referer = referer or self.base_url + "/"
+        headers = self.headers(base_referer, ajax=True)
+        variants = [headers]
+
+        fetch_headers = headers.copy()
+        fetch_headers["Accept"] = "*/*"
+        fetch_headers["Origin"] = self.base_url
+        fetch_headers["Sec-Fetch-Dest"] = "empty"
+        fetch_headers["Sec-Fetch-Mode"] = "cors"
+        fetch_headers["Sec-Fetch-Site"] = "same-origin"
+        fetch_headers.pop("Upgrade-Insecure-Requests", None)
+        variants.append(fetch_headers)
+
+        browser_headers = headers.copy()
+        browser_headers["Origin"] = self.base_url
+        browser_headers["Sec-Fetch-Dest"] = "empty"
+        browser_headers["Sec-Fetch-Mode"] = "cors"
+        browser_headers["Sec-Fetch-Site"] = "same-origin"
+        variants.append(browser_headers)
+        return variants
 
     def _prime_session(self):
         try:
