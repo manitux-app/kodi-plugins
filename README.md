@@ -10,6 +10,8 @@ Kodi için Türkçe içerik sağlayıcı eklentileri
 
 Repository add-on zip:
 
+Downloader by AFTVnews kısa kod: 5156346
+
 https://raw.githubusercontent.com/manitux-app/kodi-plugins/main/repository.manitux-1.0.0.zip
 
 https://tinyurl.com/mntxrepo
