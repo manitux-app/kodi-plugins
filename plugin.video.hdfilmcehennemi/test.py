@@ -90,7 +90,9 @@ def inspect_url(url, user_agent):
     site = HDFilmCehennemiSite(base_url_from(url), user_agent)
     extractor = VideoExtractor(user_agent)
 
-    page = site.get(url)
+    page = site.get(url, ajax=True)
+    print(page)
+
     info = site.parse_detail(page, url)
     episodes = info.get("episodes") or []
     sources = info.get("sources") or []
@@ -129,6 +131,11 @@ def inspect_url(url, user_agent):
 
     return output
 
+def page_items(url, user_agent):
+    site = HDFilmCehennemiSite(base_url_from(url), user_agent)
+    page = site.get_page_items(url)
+    print(page)
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
@@ -138,8 +145,11 @@ def main(argv=None):
     parser.add_argument("--user-agent", default=DEFAULT_USER_AGENT, help="Isteklerde kullanilacak User-Agent")
     args = parser.parse_args(argv)
 
-    data = inspect_url(args.url, args.user_agent)
-    print(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))
+    page_items(args.url, args.user_agent)
+
+    # data = inspect_url(args.url, args.user_agent)
+    # print(data)
+    # print(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

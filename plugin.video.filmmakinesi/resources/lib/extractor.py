@@ -7,7 +7,7 @@ import json
 import re
 import string
 
-import tlsclient
+import manituxhttp
 
 try:
     from urllib.parse import quote, urlparse, urlunparse
@@ -21,7 +21,7 @@ class VideoExtractor(object):
 
     def __init__(self, user_agent):
         self.user_agent = user_agent
-        self.session = tlsclient.Session(client_identifier=self.CLIENT_IDENTIFIERS[0])
+        self.session = manituxhttp.Session(client_identifier=self.CLIENT_IDENTIFIERS[0])
 
     def headers(self, referer=None):
         headers = {
@@ -114,7 +114,7 @@ class VideoExtractor(object):
         last_error = None
         for identifier in self.CLIENT_IDENTIFIERS:
             if self.session.client_identifier != identifier:
-                self.session = tlsclient.Session(client_identifier=identifier)
+                self.session = manituxhttp.Session(client_identifier=identifier)
             try:
                 res = self.session.get(
                     url,
@@ -124,11 +124,11 @@ class VideoExtractor(object):
                     tls_client_identifier=identifier,
                 )
                 if res.status_code in (403, 429) and identifier != self.CLIENT_IDENTIFIERS[-1]:
-                    last_error = tlsclient.HTTPError(res)
+                    last_error = manituxhttp.HTTPError(res)
                     continue
                 res.raise_for_status()
                 return res.text
-            except (tlsclient.HTTPError, tlsclient.RequestError) as exc:
+            except (manituxhttp.HTTPError, manituxhttp.RequestError) as exc:
                 last_error = exc
                 if identifier == self.CLIENT_IDENTIFIERS[-1]:
                     raise

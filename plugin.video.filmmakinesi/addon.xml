@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.filmmakinesi"
        name="FilmMakinesi"
-       version="1.0.4"
+       version="1.0.5"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.tlsclient"/>
+        <import addon="script.module.manituxhttp"/>
         <import addon="plugin.video.youtube" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">

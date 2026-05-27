@@ -85,25 +85,23 @@ class Response(object):
 
 
 class Session(object):
-    def __init__(self, headers=None, verify=True, use_cloudscraper=False):
+    def __init__(self, headers=None, verify=True, use_cloudscraper=True, client_identifier=None, tls_client_identifier=None):
         self.headers = headers.copy() if headers else {}
         self.verify = verify
-        if use_cloudscraper and cloudscraper is not None:
-            self._requests_session = cloudscraper.create_scraper()
-        else:
-            self._requests_session = requests.Session() if requests is not None else None
-
-        print(self._requests_session)
-            
+        self.use_cloudscraper = use_cloudscraper
+        self.client_identifier = client_identifier or tls_client_identifier
+        self._requests_session = requests.Session() if requests is not None else None
+        self._cloudscraper_session = None
         self._cookie_jar = cookielib.CookieJar()
-
-        print(self._cookie_jar)
 
     def request(self, method, url, **kwargs):
         headers = self.headers.copy()
         headers.update(kwargs.pop("headers", None) or {})
         if "User-Agent" not in headers:
             headers["User-Agent"] = DEFAULT_USER_AGENT
+
+        if "Host" in headers:
+            del headers["Host"]
 
         timeout = kwargs.pop("timeout", 25)
         data = kwargs.pop("data", None)
@@ -122,7 +120,56 @@ class Session(object):
             url = _append_query(url, params)
 
         if self._requests_session is not None:
-            return self._request_with_requests(
+            try:
+                response = self._request_with_requests(
+                    self._requests_session,
+                    method,
+                    url,
+                    headers=headers,
+                    data=data,
+                    timeout=timeout,
+                    allow_redirects=allow_redirects,
+                    verify=verify,
+                    **kwargs
+                )
+            except RequestError:
+                if self._can_use_cloudscraper():
+                    return self._request_with_cloudscraper(
+                        method,
+                        url,
+                        headers=headers,
+                        data=data,
+                        timeout=timeout,
+                        allow_redirects=allow_redirects,
+                        verify=verify,
+                        **kwargs
+                    )
+                raise
+
+            if self._should_retry_with_cloudscraper(response):
+                return self._request_with_cloudscraper(
+                    method,
+                    url,
+                    headers=headers,
+                    data=data,
+                    timeout=timeout,
+                    allow_redirects=allow_redirects,
+                    verify=verify,
+                    **kwargs
+                )
+            return response
+
+        response = self._request_with_urllib(
+            method,
+            url,
+            headers=headers,
+            data=data,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+            verify=verify,
+        )
+        if self._should_retry_with_cloudscraper(response):
+            return self._request_with_cloudscraper(
                 method,
                 url,
                 headers=headers,
@@ -132,16 +179,7 @@ class Session(object):
                 verify=verify,
                 **kwargs
             )
-
-        return self._request_with_urllib(
-            method,
-            url,
-            headers=headers,
-            data=data,
-            timeout=timeout,
-            allow_redirects=allow_redirects,
-            verify=verify,
-        )
+        return response
 
     def get(self, url, **kwargs):
         return self.request("GET", url, **kwargs)
@@ -164,9 +202,9 @@ class Session(object):
     def options(self, url, **kwargs):
         return self.request("OPTIONS", url, **kwargs)
 
-    def _request_with_requests(self, method, url, headers, data, timeout, allow_redirects, verify, **kwargs):
+    def _request_with_requests(self, session, method, url, headers, data, timeout, allow_redirects, verify, **kwargs):
         try:
-            raw = self._requests_session.request(
+            raw = session.request(
                 method,
                 url,
                 headers=headers,
@@ -185,6 +223,34 @@ class Session(object):
             headers=dict(getattr(raw, "headers", {}) or {}),
             content=getattr(raw, "content", b"") or b"",
         )
+
+    def _request_with_cloudscraper(self, method, url, headers, data, timeout, allow_redirects, verify, **kwargs):
+        if not self._can_use_cloudscraper():
+            raise RequestError("cloudscraper is not available")
+        if self._cloudscraper_session is None:
+            try:
+                self._cloudscraper_session = cloudscraper.create_scraper()
+            except Exception as exc:
+                raise RequestError(str(exc))
+        return self._request_with_requests(
+            self._cloudscraper_session,
+            method,
+            url,
+            headers=headers,
+            data=data,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+            verify=verify,
+            **kwargs
+        )
+
+    def _can_use_cloudscraper(self):
+        return self.use_cloudscraper and cloudscraper is not None
+
+    def _should_retry_with_cloudscraper(self, response):
+        if not self._can_use_cloudscraper():
+            return False
+        return response.status_code in (403, 429, 503, 520, 521, 522, 523, 524)
 
     def _request_with_urllib(self, method, url, headers, data, timeout, allow_redirects, verify):
         if data is not None and not isinstance(data, bytes):
@@ -239,36 +305,37 @@ class _NoRedirectHandler(HTTPRedirectHandler):
         return None
 
 
-def request(method, url, **kwargs):
-    return Session().request(method, url, **kwargs)
+# PARAMETRELERIN KISA YOL FONKSIYONLARINA AKTARILMASI
+def request(method, url, use_cloudscraper=True, **kwargs):
+    return Session(use_cloudscraper=use_cloudscraper).request(method, url, **kwargs)
 
 
-def get(url, **kwargs):
-    return request("GET", url, **kwargs)
+def get(url, use_cloudscraper=True, **kwargs):
+    return request("GET", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
-def post(url, **kwargs):
-    return request("POST", url, **kwargs)
+def post(url, use_cloudscraper=True, **kwargs):
+    return request("POST", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
-def put(url, **kwargs):
-    return request("PUT", url, **kwargs)
+def put(url, use_cloudscraper=True, **kwargs):
+    return request("PUT", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
-def patch(url, **kwargs):
-    return request("PATCH", url, **kwargs)
+def patch(url, use_cloudscraper=True, **kwargs):
+    return request("PATCH", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
-def delete(url, **kwargs):
-    return request("DELETE", url, **kwargs)
+def delete(url, use_cloudscraper=True, **kwargs):
+    return request("DELETE", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
-def head(url, **kwargs):
-    return request("HEAD", url, **kwargs)
+def head(url, use_cloudscraper=True, **kwargs):
+    return request("HEAD", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
-def options(url, **kwargs):
-    return request("OPTIONS", url, **kwargs)
+def options(url, use_cloudscraper=True, **kwargs):
+    return request("OPTIONS", url, use_cloudscraper=use_cloudscraper, **kwargs)
 
 
 def _append_query(url, params):
@@ -291,9 +358,8 @@ def _encoding_from_headers(headers):
 
 
 def _verify_value(verify):
-    if verify is True and certifi is not None:
-        try:
-            return certifi.where()
-        except Exception:
-            return True
+    if verify is None:
+        return True
+    if certifi is not None and verify is True:
+        return certifi.where()
     return verify

@@ -28,7 +28,7 @@
 </addon>
 <addon id="plugin.video.hdfilmcehennemi"
        name="HDFilmCehennemi"
-       version="1.0.8"
+       version="1.0.9"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -45,17 +45,16 @@
         <license>GPL-3.0-or-later</license>
         <assets>
             <icon>icon.png</icon>
-            <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
 </addon>
 <addon id="plugin.video.filmmakinesi"
        name="FilmMakinesi"
-       version="1.0.4"
+       version="1.0.5"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.tlsclient"/>
+        <import addon="script.module.manituxhttp"/>
         <import addon="plugin.video.youtube" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
@@ -63,7 +62,7 @@
     </extension>
     <extension point="xbmc.addon.metadata">
         <summary>FilmMakinesi Kodi video eklentisi</summary>
-        <description>Filmmakinesi üzerinden film ve dizi listeler, kaynakları çözer ve Kodi'de oynatir.</description>
+        <description>Filmmakinesi üzerinden film ve dizi listeler, kaynaklari çözer ve Kodi'de oynatir.</description>
         <platform>all</platform>
         <license>GPL-3.0-or-later</license>
         <assets>
@@ -74,11 +73,11 @@
 </addon>
 <addon id="plugin.video.filmekseni"
        name="FilmEkseni"
-       version="1.0.3"
+       version="1.0.4"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.tlsclient"/>
+        <import addon="script.module.manituxhttp"/>
         <import addon="plugin.video.youtube" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
@@ -96,11 +95,11 @@
 </addon>
 <addon id="plugin.video.filmmodu"
        name="FilmModu"
-       version="1.0.1"
+       version="1.0.2"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.tlsclient"/>
+        <import addon="script.module.manituxhttp"/>
         <import addon="plugin.video.youtube" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
@@ -152,7 +151,7 @@
         <license>MIT</license>
     </extension>
 </addon>
-<addon id="script.module.manituxhttp" name="Manitux HTTP" version="1.0.0" provider-name="manitux">
+<addon id="script.module.manituxhttp" name="Manitux HTTP" version="1.0.2" provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.requests" optional="true"/>
@@ -174,7 +173,7 @@
 </addon>
 <addon id="plugin.video.dizibox"
        name="DiziBOX"
-       version="1.0.2"
+       version="1.0.3"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>

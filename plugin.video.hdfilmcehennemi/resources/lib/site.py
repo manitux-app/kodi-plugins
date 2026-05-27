@@ -4,39 +4,71 @@ from __future__ import absolute_import, unicode_literals
 import manituxhttp
 
 try:
-    from urllib.parse import quote_plus
+    import urllib.parse as urlparse
 except ImportError:
-    from urllib import quote_plus
+    import urlparse
 
 from . import parsers
 
 
 class HDFilmCehennemiSite(object):
+    
     def __init__(self, base_url, user_agent):
         self.base_url = base_url.rstrip("/")
         self.user_agent = user_agent
-        self.session = manituxhttp.Session(use_cloudscraper=True)
 
+        #headers = self.headers(ajax=True)
+        # self.session = manituxhttp.Session(headers=new_headers, use_cloudscraper=True)
+        self.session = manituxhttp.Session()
+        
     def headers(self, referer=None, ajax=False):
         headers = {
             "User-Agent": self.user_agent,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
         }
+
         if referer:
             headers["Referer"] = referer
+        else:
+            headers["Referer"] = self.base_url + "/"
+
         if ajax:
-            headers["Accept"] = "application/json, text/javascript, */*; q=0.01"
             headers["X-Requested-With"] = "fetch"
-            headers["Content-Type"] = "application/json"
-            headers["Origin"] = self.base_url
-            headers["Host"] = "hdfilmcehennemi.nl"
-            headers["Sec-Fetch-Dest"] = "empty"
-            headers["Sec-Fetch-Mode"] = "cors"
-            headers["Sec-Fetch-Site"] = "same-origin"
-            headers.pop("Upgrade-Insecure-Requests", None)
+            # headers["Accept"] = "application/json, text/javascript, */*; q=0.01"
+            # headers["Content-Type"] = "application/json"
+            # #headers["Origin"] = self.base_url
+            # headers["Connection"] = "keep-alive"
+            # headers["Sec-Fetch-Dest"] = "empty"
+            # headers["Sec-Fetch-Mode"] = "cors"
+            # headers["Sec-Fetch-Site"] = "same-origin"
+            #h eaders.pop("Upgrade-Insecure-Requests", None)
         return headers
+    
+    def get_headers(self, referer=None, ajax=False):
+        headers_dict = {
+            "User-Agent": self.user_agent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Upgrade-Insecure-Requests": "1",
+            "Connection": "keep-alive"
+        }
+        if referer:
+            headers_dict["Referer"] = referer
+        if ajax:
+            headers_dict["Accept"] = "*/*"
+            headers_dict["X-Requested-With"] = "XMLHttpRequest"
+            headers_dict["Sec-Fetch-Dest"] = "empty"
+            headers_dict["Sec-Fetch-Mode"] = "cors"
+            headers_dict["Sec-Fetch-Site"] = "same-origin"
+            if "Upgrade-Insecure-Requests" in headers_dict:
+                del headers_dict["Upgrade-Insecure-Requests"]
+                
+        return headers_dict
 
     def get(self, url, referer=None, ajax=False):
         url = self.absolute(url)
@@ -50,7 +82,8 @@ class HDFilmCehennemiSite(object):
 
     def get_page_items(self, category_url, page_number=1, title=""):
         api_url = self.page_url(category_url, page_number)
-        page = self.get_ajax(api_url, referer=category_url)
+        page = self.get_ajax(api_url)
+        print(page)
         html_block = parsers.html_from_load_response(page)
         return parsers.parse_page_items(html_block, self.base_url, title)
 
@@ -58,7 +91,7 @@ class HDFilmCehennemiSite(object):
         return parsers.fix_url(url, self.base_url)
 
     def search_url(self, query):
-        return self.base_url + "/search/?q=" + quote_plus(query)
+        return self.base_url + "/search/?q=" + urlparse.quote_plus(query)
 
     def search(self, query):
         res = self._get(
@@ -100,3 +133,15 @@ class HDFilmCehennemiSite(object):
         res = self.session.get(url, headers=headers, timeout=25)
         res.raise_for_status()
         return res
+    
+    def url_to_host(self, url):
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+            
+        parsed_url = urlparse(url)
+        host = parsed_url.netloc
+        
+        if ":" in host and not host.split(":")[-1].isdigit():
+            host = host.split(":")[0]
+            
+        return host

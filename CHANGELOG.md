@@ -2,6 +2,13 @@
 
 Bu dosya, Codex ile yapilan onemli proje degisikliklerini kisa notlarla takip etmek icin tutulur.
 
+## 2026-05-27
+
+- `script.module.manituxhttp` client akisi once normal `requests` oturumu kullanip baglanti hatasi veya anti-bot HTTP durumlarinda `cloudscraper` fallback deneyecek sekilde guncellendi.
+- `plugin.video.filmekseni`, `plugin.video.filmmakinesi` ve `plugin.video.filmmodu` `script.module.tlsclient` yerine `script.module.manituxhttp` kullanacak sekilde guncellendi.
+- `script.module.manituxhttp` surumu `1.0.1`; video eklentileri `plugin.video.dizibox` `1.0.3`, `plugin.video.filmekseni` `1.0.4`, `plugin.video.filmmakinesi` `1.0.5`, `plugin.video.filmmodu` `1.0.2`, `plugin.video.hdfilmcehennemi` `1.0.9` olarak paketlendi.
+- `script.module.manituxhttp` icindeki takipli `cloudscraper` pycache dosyalari temizlendi ve modul surumu `1.0.2` olarak paketlendi.
+
 ## 2026-05-26
 
 - `plugin.video.dizibox` surumu `1.0.1` olarak yukseltildi ve paketleme icin repo metadata'si guncellendi.
