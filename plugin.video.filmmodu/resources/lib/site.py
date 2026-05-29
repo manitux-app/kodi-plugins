@@ -3,6 +3,11 @@ from __future__ import absolute_import, unicode_literals
 
 import manituxhttp
 
+try:
+    from urllib.parse import quote_plus
+except ImportError:
+    from urllib import quote_plus
+
 from . import parsers
 
 
@@ -30,6 +35,10 @@ class FilmModuSite(object):
     def get_page_items(self, category_url, page_number=1, title=""):
         page = self.get(parsers.page_url(category_url, page_number), referer=category_url)
         return parsers.parse_page_items(page, self.base_url, title)
+
+    def search(self, query):
+        page = self.get(self.base_url + "/?s=" + quote_plus(query), referer=self.base_url + "/")
+        return parsers.parse_page_items(page, self.base_url, "Arama")
 
     def get(self, url, referer=None):
         return self._get(self.absolute(url), self.headers(referer)).text

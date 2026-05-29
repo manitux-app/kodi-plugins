@@ -49,6 +49,7 @@ def add_video(title, action, url, image="", plot="", extra=None):
 
 
 def main_menu():
+    add_directory("Ara", "search")
     for title, url in site.categories():
         add_directory(title, "list", url)
     xbmcplugin.setContent(HANDLE, "videos")
@@ -66,6 +67,14 @@ def list_page(url, page_number=1):
             True,
         )
     xbmcplugin.setContent(HANDLE, "movies")
+
+
+def search():
+    query = xbmcgui.Dialog().input("FilmModu Ara")
+    if query:
+        for item in site.search(query):
+            add_directory(item["title"], "detail", item["url"], item["image"], item.get("plot", ""))
+        xbmcplugin.setContent(HANDLE, "movies")
 
 
 def detail(url):
@@ -127,6 +136,8 @@ def run():
         main_menu()
     elif action == "list":
         list_page(url, page_number)
+    elif action == "search":
+        search()
     elif action == "detail":
         detail(url)
     elif action == "play_source":

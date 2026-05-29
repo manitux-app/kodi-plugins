@@ -2,6 +2,14 @@
 
 Bu dosya, Codex ile yapilan onemli proje degisikliklerini kisa notlarla takip etmek icin tutulur.
 
+## 2026-05-29
+
+- `providers\TurkishProviders\DiziPal.cs` referans alinarak `plugin.video.dizipal` Kodi eklentisi eklendi; kategori, arama, dizi/film detay, bolum listeleme ve DiziPal player kaynak cozumleme akislari canli site verisiyle dogrulandi.
+- `plugin.video.dizipal` detay ekraninda dizi bolumlerinin tek `DiziPal` kaynak satiri tarafindan gizlenmesi duzeltildi; film kaynak etiketi `Oynat` olarak guncellendi.
+- `plugin.video.dizipal` detay ekranlarina canli DiziPal `trailer-iframe-source` verisinden YouTube fragman satiri eklendi; paketleme yapilmadi.
+- `plugin.video.dizipal` HLS oynatma kaynaklarinda CDN 403/zaman asimi hatalari icin stream header referer'i DiziPal ana sayfasi yerine embed iframe URL'sine alindi, Origin eklendi ve inputstream.adaptive icin temiz manifest URL + header property akisi kullanildi; paketleme yapilmadi.
+- Tum video eklentilerinde ana menude `Ara` en uste alindi; `plugin.video.dizibox` ve `plugin.video.filmmodu` icin eksik arama akislari eklendi. Paketleme yapilmadi.
+
 ## 2026-05-27
 
 - `script.module.manituxhttp` client akisi once normal `requests` oturumu kullanip baglanti hatasi veya anti-bot HTTP durumlarinda `cloudscraper` fallback deneyecek sekilde guncellendi.

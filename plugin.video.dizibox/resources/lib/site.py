@@ -6,8 +6,9 @@ import re
 
 import manituxhttp
 try:
-    from urllib.parse import urlparse
+    from urllib.parse import quote_plus, urlparse
 except ImportError:
+    from urllib import quote_plus
     from urlparse import urlparse
 
 from .extractor import DiziBoxExtractor
@@ -47,6 +48,10 @@ class DiziBoxSite(object):
         url = parsers.page_url(category_url, page_number)
         page = self.get(url, referer=self.base_url + self.ARCHIVE_PATH)
         return parsers.parse_page_items(page, self.base_url), parsers.has_next_page(page, page_number)
+
+    def search(self, query):
+        page = self.get(self.base_url + "/?s=" + quote_plus(query), referer=self.base_url + "/")
+        return parsers.parse_page_items(page, self.base_url), parsers.has_next_page(page, 1)
 
     def detail(self, url):
         page = self.get(url)

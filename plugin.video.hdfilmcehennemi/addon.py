@@ -52,9 +52,9 @@ def add_video(title, action, url, image="", plot="", extra=None):
 
 
 def main_menu():
+    add_directory("Ara", "search")
     for title, url in site.categories():
         add_directory(title, "list", url)
-    add_directory("Ara", "search")
     xbmcplugin.setContent(HANDLE, "videos")
 
 
