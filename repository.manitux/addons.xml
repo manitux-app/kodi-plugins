@@ -218,4 +218,27 @@
         </assets>
     </extension>
 </addon>
+<addon id="plugin.video.dizimom"
+       name="DiziMom"
+       version="1.0.0"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.manituxhttp"/>
+        <import addon="inputstream.adaptive" optional="true"/>
+        <import addon="plugin.video.youtube" optional="true"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>DiziMom Kodi video eklentisi</summary>
+        <description>DiziMom uzerinden dizi, bolum ve video kaynaklarini listeler.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
+</addon>
 </addons>
