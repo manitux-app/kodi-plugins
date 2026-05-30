@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<settings>
-    <setting id="base_url" type="text" label="FilmModu URL" default="https://filmmodu.one"/>
-    <setting id="user_agent" type="text" label="User-Agent" default="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"/>
-</settings>
