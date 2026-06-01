@@ -264,4 +264,44 @@
         </assets>
     </extension>
 </addon>
+<addon id="script.module.manituxui"
+       name="Manitux UI"
+       version="1.0.1"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.python.module" library="lib"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Shared XML video browser UI for Manitux add-ons.</summary>
+        <summary lang="tr_TR">Manitux eklentileri icin ortak XML video arayuzu.</summary>
+        <description lang="en_GB">Reusable WindowXML layout with category navigation, poster grid and video detail dialog.</description>
+        <description lang="tr_TR">Kategori navigasyonu, poster izgara ve video ayrinti penceresi sunan tekrar kullanilabilir WindowXML arayuzu.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+    </extension>
+</addon>
+<addon id="plugin.video.test"
+       name="Manitux UI Test"
+       version="1.0.2"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.manituxhttp"/>
+        <import addon="script.module.manituxui"/>
+        <import addon="plugin.video.youtube" optional="true"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>Manitux UI test video eklentisi</summary>
+        <description>Hdfilmcehennemi akisini ortak Manitux UI arayuzuyle test eder.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
+</addon>
 </addons>
