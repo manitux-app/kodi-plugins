@@ -1,4 +1,4 @@
-# Manitux Kodi-plugins
+# Manitux Kodi Eklentileri
 
  [English](README_en.md)  
  
