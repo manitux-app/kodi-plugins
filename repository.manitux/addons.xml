@@ -73,7 +73,7 @@
 </addon>
 <addon id="plugin.video.filmekseni"
        name="FilmEkseni"
-       version="1.0.7"
+       version="1.0.8"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
