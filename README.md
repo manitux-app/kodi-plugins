@@ -2,7 +2,7 @@
 
  [English](README_en.md)  
  
- ⚠️ Bu proje sürekli geliştirme aşamasındadır
+ ⚠️ Bu proje geliştirme aşamasındadır
 
 Kodi için Türkçe içerik sağlayıcı eklentileri
 
