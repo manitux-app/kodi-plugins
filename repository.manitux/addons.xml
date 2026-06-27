@@ -335,7 +335,7 @@
         </assets>
     </extension>
 </addon>
-<addon id="skin.manitux" version="0.0.3" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
+<addon id="skin.manitux" version="0.0.4" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
   <requires>
     <import addon="xbmc.gui" version="5.17.0" />
     <import addon="xbmc.python" version="3.0.0" />
@@ -361,7 +361,7 @@
 </addon>
 <addon id="plugin.video.test"
        name="Manitux UI Test"
-       version="1.0.3"
+       version="1.0.4"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
