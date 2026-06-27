@@ -335,4 +335,24 @@
         </assets>
     </extension>
 </addon>
+<addon id="skin.manitux" version="0.0.1" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
+  <requires>
+    <import addon="xbmc.gui" version="5.17.0" />
+  </requires>
+  <extension point="xbmc.gui.skin" debugging="false">
+    <res width="1920" height="1080" aspect="16:9" default="true" folder="xml" />
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <license>CC BY-SA 4.0, GNU GENERAL PUBLIC LICENSE Version 2.0</license>
+    <assets>
+      <icon>resources/logo.png</icon>
+      <screenshot>resources/sample.png</screenshot>
+    </assets>
+    <summary lang="tr_TR">Sade ve hızlı Manitux Kodi arayüzü</summary>
+    <summary lang="en_GB">A clean and fast Manitux skin for Kodi</summary>
+    <description lang="tr_TR">Televizyon ve uzaktan kumanda kullanımı için tasarlanan Manitux arayüzü.</description>
+    <description lang="en_GB">A Manitux interface designed for television and remote control use.</description>
+  </extension>
+</addon>
 </addons>
