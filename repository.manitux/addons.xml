@@ -274,7 +274,7 @@
 </addon>
 <addon id="script.module.manituxui"
        name="Manitux UI"
-       version="1.0.4"
+       version="1.0.5"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -335,12 +335,16 @@
         </assets>
     </extension>
 </addon>
-<addon id="skin.manitux" version="0.0.2" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
+<addon id="skin.manitux" version="0.0.3" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
   <requires>
     <import addon="xbmc.gui" version="5.17.0" />
+    <import addon="xbmc.python" version="3.0.0" />
   </requires>
   <extension point="xbmc.gui.skin" debugging="false">
     <res width="1920" height="1080" aspect="16:9" default="true" folder="xml" />
+  </extension>
+  <extension point="xbmc.python.script" library="default.py">
+    <provides>executable</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
     <platform>all</platform>
@@ -354,5 +358,28 @@
     <description lang="tr_TR">Televizyon ve uzaktan kumanda kullanımı için tasarlanan Manitux arayüzü.</description>
     <description lang="en_GB">A Manitux interface designed for television and remote control use.</description>
   </extension>
+</addon>
+<addon id="plugin.video.test"
+       name="Manitux UI Test"
+       version="1.0.3"
+       provider-name="manitux">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.manituxhttp"/>
+        <import addon="script.module.manituxui"/>
+        <import addon="plugin.video.youtube" optional="true"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>Manitux UI test video eklentisi</summary>
+        <description>Hdfilmcehennemi akisini ortak Manitux UI arayuzuyle test eder.</description>
+        <platform>all</platform>
+        <license>GPL-3.0-or-later</license>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
 </addon>
 </addons>
