@@ -335,7 +335,7 @@
         </assets>
     </extension>
 </addon>
-<addon id="skin.manitux" version="0.0.1" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
+<addon id="skin.manitux" version="0.0.2" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
   <requires>
     <import addon="xbmc.gui" version="5.17.0" />
   </requires>
