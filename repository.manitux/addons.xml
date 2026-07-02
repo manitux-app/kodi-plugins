@@ -28,7 +28,7 @@
 </addon>
 <addon id="plugin.video.hdfilmcehennemi"
        name="HDFilmCehennemi"
-       version="1.0.13"
+       version="1.0.14"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -51,7 +51,7 @@
 </addon>
 <addon id="plugin.video.filmmakinesi"
        name="FilmMakinesi"
-       version="1.0.8"
+       version="1.0.9"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -75,7 +75,7 @@
 </addon>
 <addon id="plugin.video.filmekseni"
        name="FilmEkseni"
-       version="1.0.9"
+       version="1.0.10"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -98,7 +98,7 @@
 </addon>
 <addon id="plugin.video.filmmodu"
        name="FilmModu"
-       version="1.0.5"
+       version="1.0.6"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -177,7 +177,7 @@
 </addon>
 <addon id="plugin.video.dizibox"
        name="DiziBOX"
-       version="1.0.6"
+       version="1.0.7"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -202,7 +202,7 @@
 </addon>
 <addon id="plugin.video.dizipal"
        name="DiziPal"
-       version="1.0.4"
+       version="1.0.5"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -226,7 +226,7 @@
 </addon>
 <addon id="plugin.video.dizimom"
        name="DiziMom"
-       version="1.0.1"
+       version="1.0.2"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -248,33 +248,9 @@
         </assets>
     </extension>
 </addon>
-<addon id="plugin.video.rectv"
-       name="RecTV"
-       version="1.0.3"
-       provider-name="manitux">
-    <requires>
-        <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.manituxui"/>
-        <import addon="script.module.manituxhttp"/>
-        <import addon="inputstream.adaptive" optional="true"/>
-        <import addon="plugin.video.youtube" optional="true"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <summary>RecTV Kodi video eklentisi</summary>
-        <description>RecTV API uzerinden canli yayin, film ve dizi kaynaklarini listeler.</description>
-        <platform>all</platform>
-        <license>GPL-3.0-or-later</license>
-        <assets>
-            <icon>icon.png</icon>
-        </assets>
-    </extension>
-</addon>
 <addon id="script.module.manituxui"
        name="Manitux UI"
-       version="1.0.6"
+       version="1.0.7"
        provider-name="manitux">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -289,76 +265,7 @@
         <license>GPL-3.0-or-later</license>
     </extension>
 </addon>
-<addon id="plugin.video.patron"
-       name="Patron"
-       version="1.0.2"
-       provider-name="manitux">
-    <requires>
-        <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.manituxhttp"/>
-        <import addon="script.module.manituxui"/>
-        <import addon="inputstream.adaptive" optional="true"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <summary>Patron Kodi video eklentisi</summary>
-        <description>patr0nq/flmS GitHub reposundaki m3u listelerini listeler ve oynatir.</description>
-        <platform>all</platform>
-        <license>GPL-3.0-or-later</license>
-        <assets>
-            <icon>icon.png</icon>
-        </assets>
-    </extension>
-</addon>
-<addon id="plugin.video.inatbox"
-       name="InatBox"
-       version="1.0.1"
-       provider-name="manitux">
-    <requires>
-        <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.manituxui"/>
-        <import addon="script.module.manituxhttp"/>
-        <import addon="inputstream.adaptive" optional="true"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <summary>InatBox Kodi video eklentisi</summary>
-        <description>InatBox API uzerinden canli yayin ve arsiv kaynaklarini listeler.</description>
-        <platform>all</platform>
-        <license>GPL-3.0-or-later</license>
-        <assets>
-            <icon>icon.png</icon>
-        </assets>
-    </extension>
-</addon>
-<addon id="plugin.video.test"
-       name="Manitux UI Test"
-       version="1.0.5"
-       provider-name="manitux">
-    <requires>
-        <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.manituxhttp"/>
-        <import addon="script.module.manituxui"/>
-        <import addon="plugin.video.youtube" optional="true"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource" provides="video" library="addon.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <summary>Manitux UI test video eklentisi</summary>
-        <description>Hdfilmcehennemi akisini ortak Manitux UI arayuzuyle test eder.</description>
-        <platform>all</platform>
-        <license>GPL-3.0-or-later</license>
-        <assets>
-            <icon>icon.png</icon>
-        </assets>
-    </extension>
-</addon>
-<addon id="skin.manitux" version="0.0.9" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
+<addon id="skin.manitux" version="0.0.11" name="Manitux" provider-name="Manitux, phil65, Ichabod Fletchman">
   <requires>
     <import addon="xbmc.gui" version="5.17.0" />
   </requires>
